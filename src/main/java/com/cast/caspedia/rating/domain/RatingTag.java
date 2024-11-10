@@ -1,26 +1,26 @@
-package com.cast.caspedia.announcement.domain;
-
-
+package com.cast.caspedia.rating.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "announcement")
+@Table(name = "rating_tag")
 @Data
-public class Announcement {
+public class RatingTag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "announcement_key")
-    private Integer announcementKey;
+    @Column(name = "rating_tag_key")
+    private Integer ratingTagKey;
 
-    @Column(name = "title", nullable = false)
-    private String title;
+    @ManyToOne
+    @JoinColumn(name = "rating_key", nullable = false)
+    private Rating rating;
 
-    @Column(name = "content", nullable = false)
-    private String content;
+    @ManyToOne
+    @JoinColumn(name = "tag_key", nullable = false)
+    private Tag tag;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -28,4 +28,5 @@ public class Announcement {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    // Getters and Setters
 }

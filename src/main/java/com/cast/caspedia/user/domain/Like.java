@@ -1,31 +1,32 @@
-package com.cast.caspedia.announcement.domain;
+package com.cast.caspedia.user.domain;
 
-
+import com.cast.caspedia.boardgame.domain.Boardgame;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "announcement")
+@Table(name = "like")
 @Data
-public class Announcement {
+public class Like {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "announcement_key")
-    private Integer announcementKey;
+    @Column(name = "like_key")
+    private Integer likeKey;
 
-    @Column(name = "title", nullable = false)
-    private String title;
+    @ManyToOne
+    @JoinColumn(name = "user_key", nullable = false)
+    private User user;
 
-    @Column(name = "content", nullable = false)
-    private String content;
+    @ManyToOne
+    @JoinColumn(name = "boardgame_key", nullable = false)
+    private Boardgame boardgame;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
-
 }
