@@ -79,6 +79,10 @@ public class BoardgameController {
     }
 
     //보드게임 상세 페이지
+    @GetMapping("/basicinfo")
+    public ResponseEntity<?> getBasicInfo(@RequestParam(name="id")int boardgameKey) {
+        return ResponseEntity.ok(boardgameService.getBasicInfo(boardgameKey));
+    }
 
     //보드게임 좋아요 표시 여부 체크
     @GetMapping("/like")

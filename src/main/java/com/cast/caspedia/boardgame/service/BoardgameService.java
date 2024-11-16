@@ -2,6 +2,7 @@ package com.cast.caspedia.boardgame.service;
 
 import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto;
+import com.cast.caspedia.boardgame.dto.BoardgameInfoResponseDto;
 import com.cast.caspedia.boardgame.dto.BoardgameSearchDto;
 import com.cast.caspedia.boardgame.dto.LikeResponseDto;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
@@ -135,5 +136,31 @@ public class BoardgameService {
             result.add(new LikeResponseDto(like.getUser().getNanoid(), like.getUser().getNickname(), like.getUser().getUserImage().getUserImageKey()));
         }
         return result;
+    }
+
+    public BoardgameInfoResponseDto getBasicInfo(int boardgameKey) throws AppException{
+        Boardgame boardgame = boardgameRepository.findById(boardgameKey).orElseThrow(() -> new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
+
+        if(boardgame == null) {
+            throw new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        BoardgameInfoResponseDto dto = new BoardgameInfoResponseDto();
+        dto.setBoardgameKey(boardgame.getBoardgameKey());
+        dto.setImageUrl(boardgame.getImageUrl());
+        dto.setNameKor(boardgame.getNameKor());
+        dto.setNameEng(boardgame.getNameEng());
+        dto.setYearPublished(boardgame.getYearPublished());
+        dto.setDescription(boardgame.getDescription());
+        dto.setMinPlayers(boardgame.getMinPlayers());
+        dto.setMaxPlayers(boardgame.getMaxPlayers());
+        dto.setMinPlaytime(boardgame.getMinPlaytime());
+        dto.setMaxPlaytime(boardgame.getMaxPlaytime());
+        dto.setGeekScore((float) Math.round(boardgame.getGeekScore() * 10) / 10);
+        dto.setGeekWeight((float) Math.round(boardgame.getGeekWeight() * 10) / 10);
+        dto.setCastScore(boardgame.getCastScore());
+        dto.setAge(boardgame.getAge());
+
+        return dto;
     }
 }
