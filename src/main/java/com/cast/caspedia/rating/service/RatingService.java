@@ -154,7 +154,7 @@ public class RatingService {
         List<Integer> ratings = ratingRepository.findRatingByBoardgameKey(boardgameKey);
         int sum = ratings.stream().mapToInt(Integer::intValue).sum();
         double castRating =  (double) sum / ratings.size();
-        castRating = Math.round(castRating * 100) / 100.0;
+        castRating = Math.round(castRating * 10) / 10.0;
         return (float)castRating;
     }
 }

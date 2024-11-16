@@ -29,7 +29,6 @@ public class RatingController {
         this.objectMapper = objectMapper;
     }
 
-
     @PostMapping("/{boardgamekey}")
     public ResponseEntity<?> addRating(@RequestBody Map<String, Object> param, @PathVariable Integer boardgamekey){
         if(param.containsKey("score") && param.containsKey("comment") && param.containsKey("tag_key")) {

@@ -1,6 +1,9 @@
 package com.cast.caspedia.boardgame.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -10,14 +13,17 @@ public class BoardgameSearchDto {
     private Pagination pagination;
     private List<Data> data;
 
-    @lombok.Data
+    @Getter
+    @Setter
+    @AllArgsConstructor
     public static class Pagination {
         private int total;
         private int page;
         private int lastPage;
     }
 
-    @lombok.Data
+    @Getter
+    @Setter
     public static class Data {
         private long boardgameKey;
         private String imageUrl;

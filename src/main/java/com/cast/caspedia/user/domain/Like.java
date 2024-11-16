@@ -7,7 +7,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "like")
+@Table(name = "\"like\"")
 @Data
 public class Like {
 
@@ -24,9 +24,17 @@ public class Like {
     @JoinColumn(name = "boardgame_key", nullable = false)
     private Boardgame boardgame;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
+
+    public Like() {
+    }
+
+    public Like(Boardgame boardgame, User user) {
+        this.user = user;
+        this.boardgame = boardgame;
+    }
 }

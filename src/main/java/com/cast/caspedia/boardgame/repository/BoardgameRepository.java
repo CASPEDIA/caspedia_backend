@@ -44,11 +44,8 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
             "FROM Boardgame b WHERE b.nameKor LIKE %:query%")
     Page<BoardgameAutoFillDto> autofillKor(String query, Pageable pageable);
 
-//    @Query("SELECT new com.cast.caspedia.boardgame.dto.BoardgameSearchDto.Data(b.boardgameKey, b.imageUrl, b.nameKor, b.nameEng, b.likes, b.geekScore, b.castScore) " +
-//            "FROM Boardgame b " +
-//            "join rating r ON b.boardgameKey = r.boardgameKey " +
-//            "join " +
-//            " b.nameEng LIKE %:query% OR b.nameKor LIKE %:query%")
-//    Page<BoardgameSearchDto.Data> search(String query, Pageable pageable);
+    //보드게임 이름으로 검색
+    @Query("SELECT b FROM Boardgame b WHERE b.nameEng LIKE %:query% OR b.nameKor LIKE %:query%")
+    Page<Boardgame> search(String query, Pageable pageable);
 
 }
