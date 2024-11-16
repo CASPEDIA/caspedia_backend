@@ -66,11 +66,9 @@ public class BoardgameService {
                 data.setImageUrl(boardgame.getImageUrl());
                 data.setNameKor(boardgame.getNameKor());
                 data.setNameEng(boardgame.getNameEng());
-//                data.setLikes(boardgame.getLikes());
-
+                data.setLikes(likeRepository.countLikeByBoardgame(boardgame));
                 //소수점 첫째 자리까지만 반환
                 data.setGeekScore((float) Math.round(boardgame.getGeekScore() * 10) / 10);
-
                 data.setCastScore(boardgame.getCastScore());
                 return data;
             }).getContent());
