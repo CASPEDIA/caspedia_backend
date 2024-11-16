@@ -107,7 +107,7 @@ public class UserController {
     }
 
     //좋아요 게임 목록 조회
-    @GetMapping("/likes/{nanoid}")
+    @GetMapping("/likes")
     public ResponseEntity<?> getLikeGameList(@RequestParam(name="nanoid") String nanoid) {
         List<LikeDto> likeDtoList = userService.getLikeList(nanoid);
         return ResponseEntity.ok(likeDtoList);

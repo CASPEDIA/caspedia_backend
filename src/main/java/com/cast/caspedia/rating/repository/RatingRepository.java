@@ -1,5 +1,6 @@
 package com.cast.caspedia.rating.repository;
 
+import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,4 +37,6 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
     @Query("SELECT r.score FROM Rating r WHERE r.boardgame.boardgameKey = :boardgameKey")
     List<Integer> findRatingByBoardgameKey(Integer boardgameKey);
 
+    @Query("SELECT r FROM Rating r WHERE r.boardgame = :boardgame")
+    List<Rating> findAllRatingByBoardgame(Boardgame boardgame);
 }

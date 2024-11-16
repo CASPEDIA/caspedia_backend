@@ -1,14 +1,17 @@
 package com.cast.caspedia.boardgame.service;
 
 import com.cast.caspedia.boardgame.domain.Boardgame;
-import com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto;
-import com.cast.caspedia.boardgame.dto.BoardgameInfoResponseDto;
-import com.cast.caspedia.boardgame.dto.BoardgameSearchDto;
-import com.cast.caspedia.boardgame.dto.LikeResponseDto;
+import com.cast.caspedia.boardgame.dto.*;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
 import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.boardgame.util.KoreanMatcher;
 import com.cast.caspedia.error.AppException;
+import com.cast.caspedia.rating.domain.Rating;
+import com.cast.caspedia.rating.domain.Tag;
+import com.cast.caspedia.rating.dto.TagCountsResponseDto;
+import com.cast.caspedia.rating.repository.RatingRepository;
+import com.cast.caspedia.rating.repository.RatingTagRepository;
+import com.cast.caspedia.rating.repository.TagRepository;
 import com.cast.caspedia.user.domain.Like;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.repository.UserRepository;
@@ -32,15 +35,25 @@ public class BoardgameService {
 
     UserRepository userRepository;
 
+    RatingTagRepository ratingTagRepository;
+
+    TagRepository tagRepository;
+
+    RatingRepository ratingRepository;
+
     KoreanMatcher koreanMatcher;
 
 
 
-    public BoardgameService(BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository) {
+
+    public BoardgameService(BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingRepository ratingRepository) {
         this.boardgameRepository = boardgameRepository;
         this.koreanMatcher = koreanMatcher;
         this.likeRepository = likeRepository;
         this.userRepository = userRepository;
+        this.ratingTagRepository = ratingTagRepository;
+        this.tagRepository = tagRepository;
+        this.ratingRepository = ratingRepository;
     }
 
     public List<BoardgameAutoFillDto> autofill(String query) {
@@ -162,5 +175,56 @@ public class BoardgameService {
         dto.setAge(boardgame.getAge());
 
         return dto;
+    }
+
+    public List<TagCountsResponseDto> getTagCounts(int boardgameKey) {
+        Boardgame boardgame = boardgameRepository.findById(boardgameKey).orElseThrow(() -> new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
+        if(boardgame == null) {
+            throw new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+        TagCountsResponseDto dto = new TagCountsResponseDto();
+
+        List<Rating> ratings = ratingRepository.findAllRatingByBoardgame(boardgame);
+
+
+        List<TagCountsResponseDto> result = new ArrayList<>();
+        for(int i = 1; i <= 24; i++) {
+            result.add(new TagCountsResponseDto(i, 0));
+        }
+
+        for(Rating rating : ratings) {
+            List<Tag> tagList = ratingTagRepository.findTagByRating(rating);
+            for(Tag tag : tagList) {
+                result.get(tag.getTagKey()).setCount(result.get(tag.getTagKey()).getCount() + 1);
+            }
+        }
+        return result;
+    }
+
+    public List<RatingListResponseDto> getRatingList(int boardgameKey) {
+        Boardgame boardgame = boardgameRepository.findById(boardgameKey).orElseThrow(() -> new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
+        List<Rating> ratings = ratingRepository.findAllRatingByBoardgame(boardgame);
+
+        List<RatingListResponseDto> result = new ArrayList<>();
+
+        for(Rating rating : ratings) {
+            RatingListResponseDto dto = new RatingListResponseDto();
+            dto.setNanoid(rating.getUser().getNanoid());
+            dto.setNickname(rating.getUser().getNickname());
+            dto.setUserImageKey(rating.getUser().getUserImage().getUserImageKey());
+            dto.setComment(rating.getComment());
+            dto.setScore(rating.getScore());
+            dto.setCreatedAt(rating.getCreatedAt().toString());
+            dto.setUpdatedAt(rating.getUpdatedAt().toString());
+
+            List<Integer> tagKeys = new ArrayList<>();
+            List<Tag> tags = ratingTagRepository.findTagByRating(rating);
+            for(Tag tag : tags) {
+                tagKeys.add(tag.getTagKey());
+            }
+            dto.setTagKeys(tagKeys);
+            result.add(dto);
+        }
+        return result;
     }
 }

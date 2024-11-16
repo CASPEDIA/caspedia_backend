@@ -1,5 +1,6 @@
 package com.cast.caspedia.user.service;
 
+import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.rating.dto.RatingDto;
@@ -44,6 +45,9 @@ public class UserService {
     @Autowired
     private UserImageRepository UserImageRepository;
 
+    @Autowired
+    private LikeRepository likeRepository;
+
 
 
     // 유저 검색 자동완성 기능
@@ -86,7 +90,21 @@ public class UserService {
     // 좋아요 게임 목록 조회
     public List<LikeDto> getLikeList(String nanoid) {
 
-        return null;
+        User user = userRepository.findByNanoid(nanoid);
+        List<LikeDto> likeDtoList = new ArrayList<>();
+
+        if (user != null) {
+            likeRepository.findAllByUser(user).forEach(like -> {
+                LikeDto likeDto = new LikeDto();
+                likeDto.setBoardgameKey(like.getBoardgame().getBoardgameKey());
+                likeDto.setNameKor(like.getBoardgame().getNameKor());
+                likeDto.setNameEng(like.getBoardgame().getNameEng());
+                likeDto.setImageUrl(like.getBoardgame().getImageUrl());
+                likeDto.setCreatedAt(like.getCreatedAt());
+                likeDtoList.add(likeDto);
+            });
+        }
+        return likeDtoList;
     }
 
     // 특정 유저의 평가 내역 목록 조회

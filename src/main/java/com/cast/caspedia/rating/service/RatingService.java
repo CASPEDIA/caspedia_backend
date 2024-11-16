@@ -16,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -79,7 +81,9 @@ public class RatingService {
         boardgameRepository.save(boardgame);
 
         // tagIds에 있는 모든 ID로 Tag 엔티티를 조회
+        Set<Integer> checkTag = new HashSet<>();
         List<RatingTag> ratingTags = ratingRequestDto.getTags().stream()
+                .filter(checkTag::add)
                 .map(tagId -> tagRepository.findById(tagId)
                         .orElseThrow(() -> new AppException("태그를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)))
                 .map(tag -> new RatingTag(savedRating, tag))
@@ -116,7 +120,9 @@ public class RatingService {
         ratingTagRepository.deleteByRating(rating);
 
         // tagIds에 있는 모든 ID로 Tag 엔티티를 조회
+        Set<Integer> checkTag = new HashSet<>();
         List<RatingTag> ratingTags = ratingRequestDto.getTags().stream()
+                .filter(checkTag::add)
                 .map(tagId -> tagRepository.findById(tagId)
                         .orElseThrow(() -> new AppException("태그를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)))
                 .map(tag -> new RatingTag(rating, tag))

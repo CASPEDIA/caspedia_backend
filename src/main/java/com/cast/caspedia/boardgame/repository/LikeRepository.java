@@ -21,4 +21,7 @@ public interface LikeRepository extends JpaRepository<Like, Integer> {
 
     @Query("SELECT COUNT(l) FROM Like l WHERE l.boardgame = :boardgame")
     int countLikeByBoardgame(Boardgame boardgame);
+
+    @Query("SELECT l FROM Like l WHERE l.user = :user")
+    List<Like> findAllByUser(User user);
 }

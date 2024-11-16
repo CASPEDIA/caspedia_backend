@@ -103,6 +103,7 @@ public class BoardgameController {
         boardgameService.addLike(boardgameKey, userId);
         return ResponseEntity.ok().build();
     }
+
     //보드게임 좋아요 취소
     @DeleteMapping("/like")
     public ResponseEntity<?> deleteLike(@RequestParam(name="id")int boardgameKey) {
@@ -121,8 +122,17 @@ public class BoardgameController {
     }
 
     //태그 통계
+    @GetMapping("/tag")
+    public ResponseEntity<?> getTagCounts(@RequestParam(name="id")int boardgameKey) {
+
+        return ResponseEntity.ok(boardgameService.getTagCounts(boardgameKey));
+    }
 
     //평가 목록
+    @GetMapping("/rating")
+    public ResponseEntity<?> getRatingList(@RequestParam(name="id")int boardgameKey) {
+        return ResponseEntity.ok(boardgameService.getRatingList(boardgameKey));
+    }
 
 
 
