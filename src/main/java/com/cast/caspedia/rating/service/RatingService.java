@@ -14,6 +14,7 @@ import com.cast.caspedia.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class RatingService {
         this.boardgameRepository = boardgameRepository;
     }
 
+    @Transactional
     public void addRating(RatingRequestDto ratingRequestDto) throws AppException {
 
         // 이미 평가한 보드게임인지 확인
@@ -72,11 +74,8 @@ public class RatingService {
         Rating savedRating = ratingRepository.save(rating);
 
         // boardgame 엔티티에 평점 업데이트
-        List<Integer> ratings = ratingRepository.findRatingByBoardgameKey(ratingRequestDto.getBoardgameKey());
-        int sum = ratings.stream().mapToInt(Integer::intValue).sum();
-        double castRating =  (double) sum / ratings.size();
-        castRating = Math.round(castRating * 100) / 100.0;
-        boardgame.setCastScore((float)castRating);
+        boardgame.setCastScore(calculateRating(ratingRequestDto.getBoardgameKey()));
+        // boardgame 테이블에 저장
         boardgameRepository.save(boardgame);
 
         // tagIds에 있는 모든 ID로 Tag 엔티티를 조회
@@ -90,4 +89,72 @@ public class RatingService {
         ratingTagRepository.saveAll(ratingTags);
     }
 
+    @Transactional
+    public void updateRating(RatingRequestDto ratingRequestDto) throws AppException{
+        // 이미 평가한 보드게임인지 확인
+        if(!ratingRepository.existsByUserIdAndBoardgameKey(ratingRequestDto.getUserId(), ratingRequestDto.getBoardgameKey())) {
+            throw new AppException("평가 기록이 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Rating 엔티티 가져오기
+        Rating rating = ratingRepository.findByUserIdAndBoardgameKey(ratingRequestDto.getUserId(), ratingRequestDto.getBoardgameKey());
+        Boardgame boardgame = rating.getBoardgame();
+
+        // Rating 엔티티 수정
+        rating.setScore(ratingRequestDto.getScore());
+        rating.setComment(ratingRequestDto.getComment());
+
+        // rating 업데이트
+        ratingRepository.save(rating);
+
+        // boardgame 엔티티에 평점 업데이트
+        boardgame.setCastScore(calculateRating(ratingRequestDto.getBoardgameKey()));
+        // boardgame 테이블에 저장
+        boardgameRepository.save(boardgame);
+
+        // 기존 태그들 삭제
+        ratingTagRepository.deleteByRating(rating);
+
+        // tagIds에 있는 모든 ID로 Tag 엔티티를 조회
+        List<RatingTag> ratingTags = ratingRequestDto.getTags().stream()
+                .map(tagId -> tagRepository.findById(tagId)
+                        .orElseThrow(() -> new AppException("태그를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)))
+                .map(tag -> new RatingTag(rating, tag))
+                .toList();
+
+        //tag 저장
+        ratingTagRepository.saveAll(ratingTags);
+    }
+
+    @Transactional
+    public void deleteRating(String userId, Integer boardgameKey) {
+        // 이미 평가한 보드게임인지 확인
+        if(!ratingRepository.existsByUserIdAndBoardgameKey(userId, boardgameKey)) {
+            throw new AppException("평가 기록이 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Rating 엔티티 가져오기
+        Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgameKey);
+        Boardgame boardgame = rating.getBoardgame();
+
+        // 기존 태그들 삭제
+        ratingTagRepository.deleteByRating(rating);
+
+        //rating 삭제
+        ratingRepository.delete(rating);
+
+        // boardgame 엔티티에 평점 업데이트
+        boardgame.setCastScore(calculateRating(boardgameKey));
+        // boardgame 테이블에 저장
+        boardgameRepository.save(boardgame);
+    }
+
+    @Transactional
+    public float calculateRating(Integer boardgameKey) {
+        List<Integer> ratings = ratingRepository.findRatingByBoardgameKey(boardgameKey);
+        int sum = ratings.stream().mapToInt(Integer::intValue).sum();
+        double castRating =  (double) sum / ratings.size();
+        castRating = Math.round(castRating * 100) / 100.0;
+        return (float)castRating;
+    }
 }

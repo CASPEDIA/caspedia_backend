@@ -50,4 +50,5 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
 //            "join " +
 //            " b.nameEng LIKE %:query% OR b.nameKor LIKE %:query%")
 //    Page<BoardgameSearchDto.Data> search(String query, Pageable pageable);
+
 }

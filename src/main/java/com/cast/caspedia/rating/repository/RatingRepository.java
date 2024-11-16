@@ -31,6 +31,10 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
     @Query("SELECT COUNT(r) > 0 FROM Rating r WHERE r.user.id = :userId AND r.boardgame.boardgameKey = :boardgameKey")
     boolean existsByUserIdAndBoardgameKey(@Param("userId") String userId, @Param("boardgameKey") Integer boardgameKey);
 
+    @Query("SELECT r FROM Rating r WHERE r.user.id = :userId AND r.boardgame.boardgameKey = :boardgameKey")
+    Rating findByUserIdAndBoardgameKey(@Param("userId") String userId, @Param("boardgameKey") Integer boardgameKey);
+
     @Query("SELECT r.score FROM Rating r WHERE r.boardgame.boardgameKey = :boardgameKey")
     List<Integer> findRatingByBoardgameKey(Integer boardgameKey);
+
 }
