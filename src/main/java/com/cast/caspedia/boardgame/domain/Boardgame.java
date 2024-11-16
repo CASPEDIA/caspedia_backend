@@ -52,10 +52,15 @@ public class Boardgame {
     @Column(name = "geek_score", nullable = false, columnDefinition = "float default 0")
     private float geekScore = 0.0f;
 
-    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "timestamp default CURRENT_TIMESTAMP")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "cast_score", nullable = false, columnDefinition = "float default 0")
+    private float castScore = 0.0f;
 
-    @Column(name = "updated_at", columnDefinition = "timestamp default CURRENT_TIMESTAMP")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
+
+
 
 }

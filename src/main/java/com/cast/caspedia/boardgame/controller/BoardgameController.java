@@ -1,8 +1,11 @@
 package com.cast.caspedia.boardgame.controller;
 
+import com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto;
+import com.cast.caspedia.boardgame.dto.BoardgameSearchDto;
 import com.cast.caspedia.boardgame.service.BGGService;
 import com.cast.caspedia.boardgame.service.BoardgameCsvSaveService;
 import com.cast.caspedia.boardgame.service.BoardgameService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/boardgame")
+@Slf4j
 public class BoardgameController {
 
     @Autowired
@@ -31,7 +35,7 @@ public class BoardgameController {
     //보드게임 가져오기
 
     //scv 저장
-    @GetMapping("/save")
+//    @GetMapping("/save")
     public ResponseEntity<?> saveCsv() {
         boardgameCsvSaveService.importCsvData("./src/main/resources/data/boardgames_ranks_20241110.csv");
 
@@ -40,25 +44,8 @@ public class BoardgameController {
 
     //상세 정보 가져오기
     @GetMapping("/detail")
-    public ResponseEntity<?> getDetail() {
-        List<String> list = new ArrayList<>();
-        list.add("1");
-        list.add("2");
-        list.add("3");
-
-        bggService.getBoardgameListInfo(list)
-                .subscribe(item -> {
-                    System.out.println("이미지: " + item.getImage());
-                    System.out.println("한글 제목: " + item.getNameKor());
-                    System.out.println("설명: " + item.getDescription());
-                    System.out.println("최소 플레이어 수: " + item.getMinPlayers());
-                    System.out.println("최대 플레이어 수: " + item.getMaxPlayers());
-                    System.out.println("최소 플레이 시간: " + item.getMinPlaytime());
-                    System.out.println("최대 플레이 시간: " + item.getMaxPlaytime());
-                    System.out.println("최소 연령: " + item.getMinAge());
-                    System.out.println("평점: " + item.getAverage());
-                    System.out.println("난이도: " + item.getAverageWeight());
-                });
+    public ResponseEntity<?> getDetail() throws Exception {
+        bggService.detailEnhance();
 
         return ResponseEntity.ok("success");
     }
@@ -66,11 +53,30 @@ public class BoardgameController {
     //======================================================================
 
     //게임 검색 자동완성
+    @GetMapping("/autofill")
     public ResponseEntity<?> autofill(@RequestParam(name="q")String query) {
-     return null;
+        List<BoardgameAutoFillDto> result = new ArrayList<>();
+        log.info("query : {}", query);
+        if(query == null) {
+            return ResponseEntity.badRequest().build();
+        }else if (query.length() > 0) {
+            result = boardgameService.autofill(query);
+        }
+        return ResponseEntity.ok(result);
     }
 
     //게임 검색 리스트 결과
+    @GetMapping("/search")
+    public ResponseEntity<?> search(@RequestParam(name="q")String query, @RequestParam(name="page", defaultValue = "1")int page) {
+        List<BoardgameSearchDto> result = new ArrayList<>();
+        log.info("query : {}", query);
+        if(query == null) {
+            return ResponseEntity.badRequest().build();
+        }else if (query.length() > 0) {
+            result = boardgameService.search(query, page);
+        }
+        return ResponseEntity.ok(result);
+    }
 
     //보드게임 상세 페이지
 

@@ -55,4 +55,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Transactional
     @Query("UPDATE User u SET u.userImage = :userImage WHERE u.id = :id")
     int updateUserImageById(UserImage userImage, String id);
+
+    @Query("SELECT u FROM User u WHERE u.id = :userId")
+    User findUserByUserId(String userId);
 }

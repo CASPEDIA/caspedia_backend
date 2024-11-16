@@ -28,3 +28,6 @@ INSERT INTO tag (name) VALUES
                            ('순발력이 필요한😎'),
                            ('상호작용이 많은⚔'),
                            ('상호작용이 적은😌');
+
+ALTER TABLE boardgame
+    ADD COLUMN cast_score FLOAT NOT NULL DEFAULT 0;
