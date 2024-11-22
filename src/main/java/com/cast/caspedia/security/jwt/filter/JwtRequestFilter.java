@@ -48,6 +48,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         // 헤더가 없거나 형식이 올바르지 않으면 다음 필터로 진행
         if (header == null || header.length() == 0 || !header.startsWith(SecurityConstants.TOKEN_PREFIX)) {
             filterChain.doFilter(request, response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid token");
+
             return;
         }
 
@@ -64,6 +67,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             // SecurityContextHolder(사용자 보안정보를 담는 객체)에
             // Authentication(사용자 인증 정보) 객체를 설정
             SecurityContextHolder.getContext().setAuthentication(authentication);
+        } else {
+            log.info("만료된 JWT 토큰입니다.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token expired");
+            return;
         }
 
         // 다음 필터로 진행

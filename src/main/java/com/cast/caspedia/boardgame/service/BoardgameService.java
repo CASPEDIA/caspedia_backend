@@ -7,7 +7,6 @@ import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.boardgame.util.KoreanMatcher;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
-import com.cast.caspedia.rating.domain.Tag;
 import com.cast.caspedia.rating.dto.TagCountsResponseDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingTagRepository;
@@ -193,9 +192,11 @@ public class BoardgameService {
         }
 
         for(Rating rating : ratings) {
-            List<Tag> tagList = ratingTagRepository.findTagByRating(rating);
-            for(Tag tag : tagList) {
-                result.get(tag.getTagKey()).setCount(result.get(tag.getTagKey()).getCount() + 1);
+            String tagKey = rating.getTagKey();
+            for(int i = 0; i < tagKey.length(); i++) {
+                if(tagKey.charAt(i) == '1') {
+                    result.get(i).setCount(result.get(i).getCount() + 1);
+                }
             }
         }
         return result;
@@ -216,13 +217,7 @@ public class BoardgameService {
             dto.setScore(rating.getScore());
             dto.setCreatedAt(rating.getCreatedAt().toString());
             dto.setUpdatedAt(rating.getUpdatedAt().toString());
-
-            List<Integer> tagKeys = new ArrayList<>();
-            List<Tag> tags = ratingTagRepository.findTagByRating(rating);
-            for(Tag tag : tags) {
-                tagKeys.add(tag.getTagKey());
-            }
-            dto.setTagKeys(tagKeys);
+            dto.setTagKeys(rating.getTagKey());
             result.add(dto);
         }
         return result;

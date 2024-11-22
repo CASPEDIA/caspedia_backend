@@ -30,10 +30,7 @@ public class UserController {
     @GetMapping("/info")
     public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
 
-        log.info("customUserDetails: {}", customUserDetails);
-
         User user = customUserDetails.getUser();
-        log.info("user: {}", user);
 
         if(user != null) {
             return ResponseEntity.ok(user);
@@ -52,11 +49,11 @@ public class UserController {
 
     //유저 검색 자동완성
     @GetMapping("/autofill")
-    public ResponseEntity<?> autofill(@RequestParam(name="q") String query) {
-        List<UserSearchDto> user = userService.autofill(query);
-        if(user == null) {
-            throw new AppException("검색 결과가 없습니다.", HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> autofill(@RequestParam(name="q", required=false) String query) {
+        if (query == null || query.trim().isEmpty()) {
+            throw new AppException("query가 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
         }
+        List<UserSearchDto> user = userService.autofill(query);
 
         return ResponseEntity.ok(user);
     }
@@ -80,6 +77,9 @@ public class UserController {
         String newNickname = params.get("new_nickname");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
 
         if(userService.changeNickname(newNickname, userId)) {
             return ResponseEntity.ok().build();
@@ -92,14 +92,18 @@ public class UserController {
     //자기소개 변경
     @PutMapping("/introduction")
     public ResponseEntity<?> changeIntroduction(@RequestBody Map<String, String> param) {
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String id = authentication.getName();
-        if(id == null) {
+        String userId = authentication.getName();
+        if(userId == null) {
             throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        if(userService.changeIntroduction(param.get("new_introduction"), id)) {
+        String newIntroduction = (String) param.get("new_introduction");
+        if (newIntroduction == null || newIntroduction.length() > 300) {
+            throw new AppException("자기소개 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        if(userService.changeIntroduction(param.get("new_introduction"), userId)) {
             return ResponseEntity.ok().build();
         } else {
             throw new AppException("자기소개 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);
@@ -108,7 +112,10 @@ public class UserController {
 
     //좋아요 게임 목록 조회
     @GetMapping("/likes")
-    public ResponseEntity<?> getLikeGameList(@RequestParam(name="nanoid") String nanoid) {
+    public ResponseEntity<?> getLikeGameList(@RequestParam(name="nanoid", required = false) String nanoid) {
+        if (nanoid == null || nanoid.trim().isEmpty()) {
+            throw new AppException("nanoid가 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
+        }
         List<LikeDto> likeDtoList = userService.getLikeList(nanoid);
         return ResponseEntity.ok(likeDtoList);
     }
@@ -116,6 +123,9 @@ public class UserController {
     //평가 내역 목록 조회
     @GetMapping("/ratings")
     public ResponseEntity<?> getRatingList(@RequestParam(name="nanoid") String nanoid) {
+        if (nanoid == null || nanoid.trim().isEmpty()) {
+            throw new AppException("nanoid가 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
+        }
         List<RatingDto> ratingDtoList = userService.getRatingList(nanoid);
         return ResponseEntity.ok(ratingDtoList);
     }

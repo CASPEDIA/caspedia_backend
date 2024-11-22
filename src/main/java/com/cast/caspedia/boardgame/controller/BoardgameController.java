@@ -6,8 +6,10 @@ import com.cast.caspedia.boardgame.dto.LikeResponseDto;
 import com.cast.caspedia.boardgame.service.BGGService;
 import com.cast.caspedia.boardgame.service.BoardgameCsvSaveService;
 import com.cast.caspedia.boardgame.service.BoardgameService;
+import com.cast.caspedia.error.AppException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,11 +56,11 @@ public class BoardgameController {
 
     //게임 검색 자동완성
     @GetMapping("/autofill")
-    public ResponseEntity<?> autofill(@RequestParam(name="q")String query) {
+    public ResponseEntity<?> autofill(@RequestParam(name="q", required = false)String query) {
         List<BoardgameAutoFillDto> result = new ArrayList<>();
         log.info("query : {}", query);
         if(query == null) {
-            return ResponseEntity.badRequest().build();
+            throw new AppException("query가 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
         }else if (query.length() > 0) {
             result = boardgameService.autofill(query);
         }
@@ -67,11 +69,11 @@ public class BoardgameController {
 
     //게임 검색 리스트 결과
     @GetMapping("/search")
-    public ResponseEntity<?> search(@RequestParam(name="q")String query, @RequestParam(name="page", defaultValue = "1")int page) {
+    public ResponseEntity<?> search(@RequestParam(name="q", required = false)String query, @RequestParam(name="page", defaultValue = "1")int page) {
         BoardgameSearchDto result = new BoardgameSearchDto();
         log.info("query : {}", query);
         if(query == null) {
-            return ResponseEntity.badRequest().build();
+            throw new AppException("query가 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
         }else if (query.length() > 0) {
             result = boardgameService.search(query, page);
         }
@@ -80,7 +82,11 @@ public class BoardgameController {
 
     //보드게임 상세 페이지
     @GetMapping("/basicinfo")
-    public ResponseEntity<?> getBasicInfo(@RequestParam(name="id")int boardgameKey) {
+    public ResponseEntity<?> getBasicInfo(@RequestParam(name="id", required = false)int boardgameKey) {
+        if(boardgameKey == 0) {
+            throw new AppException("id가 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
+        }
+
         return ResponseEntity.ok(boardgameService.getBasicInfo(boardgameKey));
     }
 

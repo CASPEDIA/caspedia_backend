@@ -32,6 +32,9 @@ public class Rating {
     @JoinColumn(name = "user_key", nullable = false)
     private User user;
 
+    @Column(name = "tag_key", nullable = false)
+    private String tagKey;
+
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
 

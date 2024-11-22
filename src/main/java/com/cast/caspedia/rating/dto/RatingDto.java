@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -18,7 +17,8 @@ public class RatingDto {
     private String nanoid;
     private String nameEng;
     private String nameKor;
-    private List<Integer> tagKey;
+    private String tagKey;
+    private String imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

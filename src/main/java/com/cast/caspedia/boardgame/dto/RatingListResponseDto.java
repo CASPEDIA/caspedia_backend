@@ -2,8 +2,6 @@ package com.cast.caspedia.boardgame.dto;
 
 import lombok.Data;
 
-import java.util.List;
-
 @Data
 public class RatingListResponseDto {
     private String nanoid;
@@ -13,5 +11,5 @@ public class RatingListResponseDto {
     private int score;
     private String createdAt;
     private String updatedAt;
-    private List<Integer> tagKeys;
+    private String tagKeys;
 }

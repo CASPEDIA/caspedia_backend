@@ -59,18 +59,24 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             authentication = authenticationManager.authenticate(authentication);
             log.info("authentication: {}", authentication);
 
-            // 인증 실패 시
-            if(!authentication.isAuthenticated()) {
-                log.info("인증 실패");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            }
-
             log.info("인증 성공");
             return authentication;
 
+        } catch (AuthenticationException e) {
+            // 인증 실패 시 401 상태 설정 및 JSON 응답 작성
+            try {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\": \"Failed to login.\"}");
+            } catch (IOException ioException) {
+                // 에러 발생 시에도 로그를 최소화
+                log.warn("Failed to write authentication error response.");
+            }
+            // 로그 출력 생략
+            return null;
         } catch (IOException e) {
-            log.error("Failed to parse authentication request body", e);
-            throw new RuntimeException("Failed to parse authentication request body", e);
+            log.warn("Failed to parse authentication request body");
+            throw new RuntimeException("Invalid request");
         }
 
     }
@@ -90,10 +96,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String jwt = jwtTokenProvider.createToken(userId, userRole, nanoid);
         response.setHeader(JwtContstants.TOKEN_HEADER, JwtContstants.TOKEN_PREFIX + jwt);
         response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
         response.getWriter().write("""
                 {
                     "token": "%s"
+                    "nanoid": "%s"
                 }
-                """.formatted(jwt));
+                """.formatted(jwt, nanoid));
     }
 }

@@ -73,10 +73,13 @@ public class UserService {
 
     // 닉네임 변경
     @Transactional
-    public boolean changeNickname(String newNickname, String userId) {
-
-        int rowsUpdated = userRepository.updateNicknamebyId(newNickname, userId);
-        return rowsUpdated > 0;
+    public boolean changeNickname(String newNickname, String userId) throws AppException {
+        try {
+            int rowsUpdated = userRepository.updateNicknamebyId(newNickname, userId);
+            return rowsUpdated > 0;
+        } catch (Exception e) {
+            throw new AppException("닉네임 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);
+        }
     }
 
 
@@ -132,16 +135,14 @@ public class UserService {
                 ratingDto.setNameEng(rating.getBoardgame().getNameEng());
                 ratingDto.setCreatedAt(rating.getCreatedAt());
                 ratingDto.setUpdatedAt(rating.getUpdatedAt());
-                ratingDto.setTagKey(new ArrayList<>());
-
-                ratingTagRepository.findTagByRating(rating).forEach(tag -> {
-                    ratingDto.getTagKey().add(tag.getTagKey());
-                });
-
+                ratingDto.setTagKey(rating.getTagKey());
+                ratingDto.setImageUrl(rating.getBoardgame().getImageUrl());
                 ratingDtos.add(ratingDto);
-
             }
         }
+
+
+
         return ratingDtos;
     }
 

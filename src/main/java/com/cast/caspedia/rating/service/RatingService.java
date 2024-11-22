@@ -4,11 +4,8 @@ import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
-import com.cast.caspedia.rating.domain.RatingTag;
 import com.cast.caspedia.rating.dto.RatingRequestDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
-import com.cast.caspedia.rating.repository.RatingTagRepository;
-import com.cast.caspedia.rating.repository.TagRepository;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -28,17 +23,12 @@ public class RatingService {
 
     RatingRepository ratingRepository;
 
-    RatingTagRepository ratingTagRepository;
-
-    TagRepository tagRepository;
 
     BoardgameRepository boardgameRepository;
 
-    RatingService(UserRepository userRepository, RatingRepository ratingRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, BoardgameRepository boardgameRepository) {
+    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository) {
         this.userRepository = userRepository;
         this.ratingRepository = ratingRepository;
-        this.ratingTagRepository = ratingTagRepository;
-        this.tagRepository = tagRepository;
         this.boardgameRepository = boardgameRepository;
     }
 
@@ -54,6 +44,7 @@ public class RatingService {
         Rating rating = new Rating();
         rating.setScore(ratingRequestDto.getScore());
         rating.setComment(ratingRequestDto.getComment());
+        rating.setTagKey(ratingRequestDto.getTags());
 
         // boardgameKey로 Boardgame 엔티티 조회
         Boardgame boardgame = boardgameRepository.findById(ratingRequestDto.getBoardgameKey())
@@ -79,18 +70,6 @@ public class RatingService {
         boardgame.setCastScore(calculateRating(ratingRequestDto.getBoardgameKey()));
         // boardgame 테이블에 저장
         boardgameRepository.save(boardgame);
-
-        // tagIds에 있는 모든 ID로 Tag 엔티티를 조회
-        Set<Integer> checkTag = new HashSet<>();
-        List<RatingTag> ratingTags = ratingRequestDto.getTags().stream()
-                .filter(checkTag::add)
-                .map(tagId -> tagRepository.findById(tagId)
-                        .orElseThrow(() -> new AppException("태그를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)))
-                .map(tag -> new RatingTag(savedRating, tag))
-                .toList();
-
-        //tag 저장
-        ratingTagRepository.saveAll(ratingTags);
     }
 
     @Transactional
@@ -107,6 +86,7 @@ public class RatingService {
         // Rating 엔티티 수정
         rating.setScore(ratingRequestDto.getScore());
         rating.setComment(ratingRequestDto.getComment());
+        rating.setTagKey(ratingRequestDto.getTags());
 
         // rating 업데이트
         ratingRepository.save(rating);
@@ -115,21 +95,6 @@ public class RatingService {
         boardgame.setCastScore(calculateRating(ratingRequestDto.getBoardgameKey()));
         // boardgame 테이블에 저장
         boardgameRepository.save(boardgame);
-
-        // 기존 태그들 삭제
-        ratingTagRepository.deleteByRating(rating);
-
-        // tagIds에 있는 모든 ID로 Tag 엔티티를 조회
-        Set<Integer> checkTag = new HashSet<>();
-        List<RatingTag> ratingTags = ratingRequestDto.getTags().stream()
-                .filter(checkTag::add)
-                .map(tagId -> tagRepository.findById(tagId)
-                        .orElseThrow(() -> new AppException("태그를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)))
-                .map(tag -> new RatingTag(rating, tag))
-                .toList();
-
-        //tag 저장
-        ratingTagRepository.saveAll(ratingTags);
     }
 
     @Transactional
@@ -142,9 +107,6 @@ public class RatingService {
         // Rating 엔티티 가져오기
         Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgameKey);
         Boardgame boardgame = rating.getBoardgame();
-
-        // 기존 태그들 삭제
-        ratingTagRepository.deleteByRating(rating);
 
         //rating 삭제
         ratingRepository.delete(rating);

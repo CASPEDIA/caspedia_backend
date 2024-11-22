@@ -31,3 +31,11 @@ INSERT INTO tag (name) VALUES
 
 ALTER TABLE boardgame
     ADD COLUMN cast_score FLOAT NOT NULL DEFAULT 0;
+
+--  introduction varchar NOT NULL DEFAULT '',
+
+ALTER TABLE caspedia.public."user"
+    ALTER COLUMN introduction TYPE text;
+
+ALTER TABLE rating
+    ADD COLUMN tag_key varchar(50) NOT NULL DEFAULT '000000000000000000000000';
