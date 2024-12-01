@@ -26,7 +26,7 @@ CREATE TABLE "user" (
                         nickname varchar NOT NULL,
                         name varchar NOT NULL,
                         nanoid varchar NOT NULL,
-                        introduction varchar NOT NULL DEFAULT '',
+                        introduction TEXT NOT NULL DEFAULT '',
                         student_id int NOT NULL,
                         enabled boolean NOT NULL DEFAULT true,
                         authority_key int NOT NULL,  -- 외래 키 추가
@@ -40,20 +40,14 @@ CREATE TABLE rating (
                         rating_key serial PRIMARY KEY,
                         score int NOT NULL DEFAULT 1,
                         comment varchar NOT NULL DEFAULT '',
+                        tag_key varchar(50) NOT NULL DEFAULT '000000000000000000000000',
+                        cast_score FLOAT NOT NULL DEFAULT 0,
                         boardgame_key int NOT NULL,  -- 외래 키 추가
                         user_key int NOT NULL,  -- 외래 키 추가
                         created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                         updated_at timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
--- 태그 기록 테이블 (rating_tag)
-CREATE TABLE rating_tag (
-                            rating_tag_key serial PRIMARY KEY,
-                            rating_key int NOT NULL,  -- 외래 키 추가
-                            tag_key int NOT NULL,  -- 외래 키 추가
-                            created_at timestamp DEFAULT CURRENT_TIMESTAMP,
-                            updated_at timestamp DEFAULT CURRENT_TIMESTAMP
-);
 
 -- 태그 테이블 (tag)
 CREATE TABLE tag (
@@ -146,17 +140,6 @@ ALTER TABLE "user"
         FOREIGN KEY (user_image_key)
             REFERENCES user_image (user_image_key);
 
--- rating_tag 테이블의 tag_key가 tag 테이블의 tag_key를 참조
-ALTER TABLE rating_tag
-    ADD CONSTRAINT FK_rating_tag_tag
-        FOREIGN KEY (tag_key)
-            REFERENCES tag (tag_key);
-
--- rating_tag 테이블의 rating_key가 rating 테이블의 rating_key를 참조
-ALTER TABLE rating_tag
-    ADD CONSTRAINT FK_rating_tag_rating
-        FOREIGN KEY (rating_key)
-            REFERENCES rating (rating_key);
 
 -- 트리거 함수 생성
 CREATE OR REPLACE FUNCTION update_timestamp()
@@ -180,11 +163,6 @@ EXECUTE FUNCTION update_timestamp();
 
 CREATE TRIGGER trigger_update_rating
     BEFORE UPDATE ON rating
-    FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
-CREATE TRIGGER trigger_update_rating_tag
-    BEFORE UPDATE ON rating_tag
     FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
@@ -213,3 +191,33 @@ CREATE TRIGGER trigger_update_boardgame
     FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
+insert into caspedia.public.authority (role) values('ROLE_ADMIN'), ('ROLE_USER');
+
+insert into caspedia.public.user_image (user_image_key, path, name)
+VALUES (1, 'image_url', 'default.png'), (2, 'image_url', 'default.png');
+
+INSERT INTO tag (name) VALUES
+                           ('2인 베스트✌️'),
+                           ('3인 베스트🤟'),
+                           ('4인 베스트🖖️'),
+                           ('사람 많을수록 좋은👨‍👩‍👧‍👦'),
+                           ('누구나 쉽게 할 수 있는👶'),
+                           ('전략 게임 입문으로🧒🏻'),
+                           ('숙련자들이 즐기는👨🏻‍🎓'),
+                           ('게이머즈 게임👹🔥'),
+                           ('친구들과 함께👭'),
+                           ('가족들과 함께👨‍👩‍👦‍👩‍👧‍👦'),
+                           ('연인과 함께👩‍❤️‍👨'),
+                           ('룰이 간단한🔰'),
+                           ('또 해보고 싶은💘'),
+                           ('쉬는 동안 가볍게☕'),
+                           ('스토리가 매력적인📽'),
+                           ('구성물이 예쁜💎'),
+                           ('승패가 중요하지 않은🙌'),
+                           ('아이스브레이킹😄'),
+                           ('추리력이 필요한🕵️'),
+                           ('수싸움이 치열한🧠'),
+                           ('심리전이 필요한👀'),
+                           ('순발력이 필요한😎'),
+                           ('상호작용이 많은⚔'),
+                           ('상호작용이 적은😌');
