@@ -119,4 +119,19 @@ public class RatingController {
 
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{boardgamekey}")
+    public ResponseEntity<?> getRating(@PathVariable Integer boardgamekey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            return ResponseEntity.ok(ratingService.getRating(userId, boardgamekey));
+        } catch (Exception e) {
+            throw new AppException("평점 정보를 가져오는데 실패하였습니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
 }

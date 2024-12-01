@@ -4,6 +4,8 @@ import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
+import com.cast.caspedia.rating.dto.RatingExistResponseDto;
+import com.cast.caspedia.rating.dto.RatingNoExistResponseDto;
 import com.cast.caspedia.rating.dto.RatingRequestDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.user.domain.User;
@@ -124,5 +126,25 @@ public class RatingService {
         double castRating =  (double) sum / ratings.size();
         castRating = Math.round(castRating * 10) / 10.0;
         return (float)castRating;
+    }
+
+    //평가를 조회하는 메서드
+    public Object getRating(String userId, Integer boardgamekey) {
+        if(!ratingRepository.existsByUserIdAndBoardgameKey(userId, boardgamekey)) {
+            RatingNoExistResponseDto ratingNoExistResponseDto = new RatingNoExistResponseDto();
+            ratingNoExistResponseDto.setRatingExist(false);
+            return ratingNoExistResponseDto;
+        }else {
+            Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgamekey);
+            RatingExistResponseDto ratingExistResponseDto = new RatingExistResponseDto();
+            ratingExistResponseDto.setRatingExist(true);
+            ratingExistResponseDto.setScore(rating.getScore());
+            ratingExistResponseDto.setComment(rating.getComment());
+            ratingExistResponseDto.setNameEng(rating.getBoardgame().getNameEng());
+            ratingExistResponseDto.setNameKor(rating.getBoardgame().getNameKor());
+            ratingExistResponseDto.setTagKey(rating.getTagKey());
+            ratingExistResponseDto.setImageUrl(rating.getBoardgame().getImageUrl());
+            return ratingExistResponseDto;
+        }
     }
 }
