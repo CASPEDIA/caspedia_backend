@@ -99,7 +99,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.setContentType("application/json");
         response.getWriter().write("""
                 {
-                    "token": "%s"
+                    "token": "%s" ,
                     "nanoid": "%s"
                 }
                 """.formatted(jwt, nanoid));
