@@ -1,0 +1,64 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.0-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.cast'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// jwt
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+	//nanoid
+	// https://mvnrepository.com/artifact/com.aventrix.jnanoid/jnanoid
+	implementation 'com.aventrix.jnanoid:jnanoid:2.0.0'
+
+	// https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.0'
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
+
+	// https://mvnrepository.com/artifact/com.opencsv/opencsv
+	implementation 'com.opencsv:opencsv:5.9'
+
+	//비동기 http 요청을 위한 webflux
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
