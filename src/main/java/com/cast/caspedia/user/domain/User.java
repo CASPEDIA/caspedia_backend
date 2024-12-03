@@ -15,13 +15,13 @@ public class User {
     @Column(name = "user_key")
     private Integer userKey;
 
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, unique = true)
     private String id;
 
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "nickname", nullable = false , unique = true)
     private String nickname;
 
     @Column(name = "name", nullable = false)

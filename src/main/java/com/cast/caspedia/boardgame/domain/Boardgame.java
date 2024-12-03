@@ -61,6 +61,7 @@ public class Boardgame {
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
-
+    @Column(name = "designer", nullable = false, columnDefinition = "text default ''")
+    private String designer;
 
 }

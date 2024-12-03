@@ -23,7 +23,7 @@ CREATE TABLE "user" (
                         user_key serial PRIMARY KEY,
                         id varchar NOT NULL UNIQUE,
                         password varchar NOT NULL,
-                        nickname varchar NOT NULL,
+                        nickname varchar NOT NULL UNIQUE,
                         name varchar NOT NULL,
                         nanoid varchar NOT NULL,
                         introduction TEXT NOT NULL DEFAULT '',
@@ -99,6 +99,7 @@ CREATE TABLE boardgame (
                            cast_owned boolean NOT NULL DEFAULT false,
                            geek_weight float NOT NULL DEFAULT 0,
                            geek_score float NOT NULL DEFAULT 0,
+                           cast_score FLOAT NOT NULL DEFAULT 0,
                            created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                            updated_at timestamp DEFAULT CURRENT_TIMESTAMP
 );

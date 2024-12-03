@@ -58,4 +58,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u FROM User u WHERE u.id = :userId")
     User findUserByUserId(String userId);
+
+    @Query("SELECT count(u)>0 FROM User u WHERE u.nickname = :newNickname")
+    boolean existsByNickname(String newNickname);
 }

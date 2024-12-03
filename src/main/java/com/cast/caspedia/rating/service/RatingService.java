@@ -129,10 +129,15 @@ public class RatingService {
     }
 
     //평가를 조회하는 메서드
-    public Object getRating(String userId, Integer boardgamekey) {
+    public Object getRating(String userId, Integer boardgamekey) throws AppException{
         if(!ratingRepository.existsByUserIdAndBoardgameKey(userId, boardgamekey)) {
+            Boardgame boardgame = boardgameRepository.findById(boardgamekey)
+                    .orElseThrow(() -> new AppException("보드게임을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST));
             RatingNoExistResponseDto ratingNoExistResponseDto = new RatingNoExistResponseDto();
             ratingNoExistResponseDto.setRatingExist(false);
+            ratingNoExistResponseDto.setNameEng(boardgame.getNameEng());
+            ratingNoExistResponseDto.setNameKor(boardgame.getNameKor());
+            ratingNoExistResponseDto.setImageUrl(boardgame.getImageUrl());
             return ratingNoExistResponseDto;
         }else {
             Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgamekey);

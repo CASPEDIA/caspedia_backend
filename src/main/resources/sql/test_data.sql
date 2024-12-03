@@ -39,3 +39,31 @@ ALTER TABLE caspedia.public."user"
 
 ALTER TABLE rating
     ADD COLUMN tag_key varchar(50) NOT NULL DEFAULT '000000000000000000000000';
+
+ALTER TABLE caspedia.public."user"
+    ALTER COLUMN nickname TYPE varchar(255);
+ALTER TABLE caspedia.public."user"
+    ALTER COLUMN nickname SET NOT NULL;
+ALTER TABLE caspedia.public."user"
+    ADD CONSTRAINT user_nickname_unique UNIQUE (nickname);
+
+
+ALTER TABLE caspedia.public."boardgame"
+    ADD COLUMN designer TEXT NOT NULL DEFAULT '';
+
+drop table if exists boardgame_category;
+drop table if exists boardgame_mechanic;
+
+CREATE TABLE boardgame_category (
+                                    id SERIAL PRIMARY KEY,
+                                    boardgame_key INTEGER REFERENCES boardgame(boardgame_key),
+                                    category_id INTEGER,
+                                    category_value TEXT
+);
+
+CREATE TABLE boardgame_mechanic (
+                                    id SERIAL PRIMARY KEY,
+                                    boardgame_key INTEGER REFERENCES boardgame(boardgame_key),
+                                    mechanic_id INTEGER,
+                                    mechanic_value TEXT
+);

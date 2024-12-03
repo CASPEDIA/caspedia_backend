@@ -74,6 +74,10 @@ public class UserService {
     // 닉네임 변경
     @Transactional
     public boolean changeNickname(String newNickname, String userId) throws AppException {
+        if(userRepository.existsByNickname(newNickname)) {
+            throw new AppException("이미 사용중인 닉네임입니다.", HttpStatus.BAD_REQUEST);
+        }
+
         try {
             int rowsUpdated = userRepository.updateNicknamebyId(newNickname, userId);
             return rowsUpdated > 0;
