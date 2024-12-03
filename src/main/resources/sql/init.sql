@@ -100,9 +100,28 @@ CREATE TABLE boardgame (
                            geek_weight float NOT NULL DEFAULT 0,
                            geek_score float NOT NULL DEFAULT 0,
                            cast_score FLOAT NOT NULL DEFAULT 0,
+                           designer TEXT NOT NULL DEFAULT '',
                            created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                            updated_at timestamp DEFAULT CURRENT_TIMESTAMP
 );
+
+drop table if exists boardgame_category;
+drop table if exists boardgame_mechanic;
+
+CREATE TABLE boardgame_category (
+                                    id SERIAL PRIMARY KEY,
+                                    boardgame_key INTEGER REFERENCES boardgame(boardgame_key),
+                                    category_id INTEGER,
+                                    category_value TEXT
+);
+
+CREATE TABLE boardgame_mechanic (
+                                    id SERIAL PRIMARY KEY,
+                                    boardgame_key INTEGER REFERENCES boardgame(boardgame_key),
+                                    mechanic_id INTEGER,
+                                    mechanic_value TEXT
+);
+
 
 -- 외래 키 설정
 -- rating 테이블의 user_key가 user 테이블의 user_key를 참조
