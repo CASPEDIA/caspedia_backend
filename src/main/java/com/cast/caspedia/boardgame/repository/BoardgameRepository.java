@@ -37,15 +37,25 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
 
     //보드게임 이름으로 검색 auto fill
     @Query("SELECT new com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto(b.boardgameKey, b.nameEng, b.yearPublished) " +
-            "FROM Boardgame b WHERE b.nameEng LIKE %:query%")
+            "FROM Boardgame b " +
+            "WHERE LOWER(REPLACE(b.nameEng, ' ', '')) LIKE LOWER(REPLACE(CONCAT('%', :query, '%'), ' ', '')) " +
+            "ORDER BY b.boardgameKey")
     Page<BoardgameAutoFillDto> autofillEng(String query, Pageable pageable);
 
+
     @Query("SELECT new com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto(b.boardgameKey, b.nameKor, b.yearPublished) " +
-            "FROM Boardgame b WHERE b.nameKor LIKE %:query%")
+            "FROM Boardgame b " +
+            "WHERE REPLACE(b.nameKor, ' ', '') LIKE REPLACE(CONCAT('%', :query, '%'), ' ', '') " +
+            "order by b.boardgameKey")
     Page<BoardgameAutoFillDto> autofillKor(String query, Pageable pageable);
 
+
     //보드게임 이름으로 검색
-    @Query("SELECT b FROM Boardgame b WHERE b.nameEng LIKE %:query% OR b.nameKor LIKE %:query%")
+    @Query("SELECT b " +
+            "FROM Boardgame b " +
+            "WHERE LOWER(REPLACE(b.nameEng, ' ', '')) LIKE LOWER(REPLACE(CONCAT('%', :query, '%'), ' ', '')) " +
+            "OR REPLACE(b.nameKor, ' ', '') LIKE REPLACE(CONCAT('%', :query, '%'), ' ', '') " +
+            "ORDER BY b.boardgameKey")
     Page<Boardgame> search(String query, Pageable pageable);
 
 }
