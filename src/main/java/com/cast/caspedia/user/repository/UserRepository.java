@@ -61,4 +61,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT count(u)>0 FROM User u WHERE u.nickname = :newNickname")
     boolean existsByNickname(String newNickname);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE User u SET u.password = :encodedPw WHERE u.id = :userId")
+    int updatePasswordById(String encodedPw, String userId);
 }

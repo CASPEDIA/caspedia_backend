@@ -2,16 +2,15 @@ package com.cast.caspedia.user.controller;
 
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.dto.RatingDto;
-import com.cast.caspedia.security.custom.CustomUserDetails;
-import com.cast.caspedia.user.domain.User;
-import com.cast.caspedia.user.dto.*;
+import com.cast.caspedia.user.dto.LikeDto;
+import com.cast.caspedia.user.dto.UserInfoDto;
+import com.cast.caspedia.user.dto.UserSearchDto;
 import com.cast.caspedia.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,19 +25,38 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    //인증된 사용자 정보 조회
-    @GetMapping("/info")
-    public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-
-        User user = customUserDetails.getUser();
-
-        if(user != null) {
-            return ResponseEntity.ok(user);
-        } else {
+    //비밀번호 변경
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> param) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
             throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
         }
-    }
+        String oldPassword = param.get("old_password");
+        String newPassword = param.get("new_password");
 
+
+        //이전 비밀번호가 맞는지 확인
+        if(!userService.checkPassword(oldPassword, userId)) {
+            throw new AppException("이전 비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //비밀번호가 이전과 다른지 확인
+        if(oldPassword.equals(newPassword)) {
+            throw new AppException("이전 비밀번호와 새 비밀번호가 같습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        if(newPassword == null || newPassword.length() < 8 || newPassword.length() > 64) {
+            throw new AppException("새 비밀번호는 8글자 이상이어야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        if(userService.changePassword(newPassword, userId)) {
+            return ResponseEntity.ok().build();
+        } else {
+            throw new AppException("비밀번호 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
 
     //로그아웃
     @PostMapping("/logout")

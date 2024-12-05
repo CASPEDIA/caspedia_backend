@@ -172,5 +172,14 @@ public class UserService {
     }
 
 
+    public boolean checkPassword(String oldPassword, String userId){
+        User user = userRepository.findUserByUserId(userId);
+        return passwordEncoder.matches(oldPassword, user.getPassword());
+    }
 
+    public boolean changePassword(String newPassword, String userId){
+        String encodedPw = passwordEncoder.encode(newPassword);
+        int rowsUpdated = userRepository.updatePasswordById(encodedPw, userId);
+        return rowsUpdated > 0;
+    }
 }
