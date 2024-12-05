@@ -71,19 +71,40 @@ public class UserService {
         return null;
     }
 
+    // 닉네임 중복 체크
+    public boolean isUniqueNickname(String nickname) {
+        return !userRepository.existsByNickname(nickname);
+    }
+
+    // 닉네임 길이 및 문자열 체크
+    public boolean isValidNickname(String nickname) {
+        int maxByteLength = 20; // 최대 허용 길이
+        int byteLength = 0;
+
+        for (char ch : nickname.toCharArray()) {
+            if (Character.toString(ch).matches("[가-힣]")) {
+                byteLength += 2; // 한글은 2바이트
+            } else if (Character.toString(ch).matches("[a-zA-Z0-9_.]")) {
+                byteLength += 1; // 영어, 숫자, '_', '.'은 1바이트
+            } else {
+                // 허용되지 않는 문자 발견 시 false 반환
+                return false;
+            }
+
+            // 초과 여부를 미리 확인
+            if (byteLength > maxByteLength) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     // 닉네임 변경
     @Transactional
     public boolean changeNickname(String newNickname, String userId) throws AppException {
-        if(userRepository.existsByNickname(newNickname)) {
-            throw new AppException("이미 사용중인 닉네임입니다.", HttpStatus.BAD_REQUEST);
-        }
-
-        try {
-            int rowsUpdated = userRepository.updateNicknamebyId(newNickname, userId);
-            return rowsUpdated > 0;
-        } catch (Exception e) {
-            throw new AppException("닉네임 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);
-        }
+        int rowsUpdated = userRepository.updateNicknamebyId(newNickname, userId);
+        return rowsUpdated > 0;
     }
 
 
