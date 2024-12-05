@@ -28,15 +28,25 @@ public class RatingController {
 
     @PostMapping("/{boardgamekey}")
     public ResponseEntity<?> addRating(@RequestBody Map<String, Object> param, @PathVariable Integer boardgamekey){
-        if(param.containsKey("score") && param.containsKey("comment") && param.containsKey("tag_key")) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String userId = authentication.getName();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //태그와 점수는 필수 값
+        if(param.containsKey("score") && param.containsKey("tag_key")) {
             RatingRequestDto ratingRequestDto = new RatingRequestDto();
             ratingRequestDto.setScore((Integer) param.get("score"));
-            ratingRequestDto.setComment((String) param.get("comment"));
+            ratingRequestDto.setComment((String) param.getOrDefault("comment", ""));
             ratingRequestDto.setBoardgameKey(boardgamekey);
             ratingRequestDto.setUserId(userId);
             ratingRequestDto.setTags((String)param.get("tag_key"));
+
+            //한줄평 길이 확인
+            if(ratingRequestDto.getComment().length() > 300) {
+                throw new AppException("한줄평은 300자 이하여야 합니다.", HttpStatus.BAD_REQUEST);
+            }
 
             int tagCnt = 0;
             if(ratingRequestDto.getTags().length() != 24) {
@@ -51,18 +61,12 @@ public class RatingController {
                 }
             }
 
-
-            log.info("ratingRequestDto: {}", ratingRequestDto);
-
             // 평점이 1~10 사이의 값인지 확인
             if(ratingRequestDto.getScore() < 1 || ratingRequestDto.getScore() > 10) {
                 throw new AppException("평점은 1~10 사이의 값이어야 합니다.", HttpStatus.BAD_REQUEST);
             }
-
             ratingService.addRating(ratingRequestDto);
-
             return ResponseEntity.ok().build();
-
         }else {
             throw new AppException("필수 정보가 누락되었습니다.", HttpStatus.BAD_REQUEST);
         }
@@ -70,17 +74,19 @@ public class RatingController {
 
     @PutMapping("/{boardgamekey}")
     public ResponseEntity<?> updateRating(@RequestBody Map<String, Object> param, @PathVariable Integer boardgamekey) {
-        if(param.containsKey("score") && param.containsKey("comment") && param.containsKey("tag_key")) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String userId = authentication.getName();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        if(param.containsKey("score") && param.containsKey("tag_key")) {
             RatingRequestDto ratingRequestDto = new RatingRequestDto();
             ratingRequestDto.setScore((Integer) param.get("score"));
-            ratingRequestDto.setComment((String) param.get("comment"));
+            ratingRequestDto.setComment((String) param.getOrDefault("comment", ""));
             ratingRequestDto.setBoardgameKey(boardgamekey);
             ratingRequestDto.setUserId(userId);
             ratingRequestDto.setTags((String)param.get("tag_key"));
-
-            log.info("ratingRequestDto: {}", ratingRequestDto);
 
             int tagCnt = 0;
             if(ratingRequestDto.getTags().length() != 24) {

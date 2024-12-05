@@ -21,7 +21,7 @@ public class Rating {
     @Column(name = "score", nullable = false)
     private int score;
 
-    @Column(name = "comment", nullable = false)
+    @Column(name = "comment", length = 300, nullable = false)
     private String comment;
 
     @ManyToOne

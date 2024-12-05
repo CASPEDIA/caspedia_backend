@@ -67,3 +67,6 @@ CREATE TABLE boardgame_mechanic (
                                     mechanic_id INTEGER,
                                     mechanic_value TEXT
 );
+
+ALTER TABLE caspedia.public."rating"
+    ALTER COLUMN comment TYPE TEXT;

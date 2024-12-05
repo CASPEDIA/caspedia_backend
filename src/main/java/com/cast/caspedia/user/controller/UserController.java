@@ -130,12 +130,13 @@ public class UserController {
             throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        String newIntroduction = (String) param.get("new_introduction");
-        if (newIntroduction == null || newIntroduction.length() > 300) {
-            throw new AppException("자기소개 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);
+        String newIntroduction = (String) param.getOrDefault("new_introduction", "");
+
+        if(newIntroduction.length() > 300) {
+            throw new AppException("자기소개는 300자 이하여야 합니다.", HttpStatus.BAD_REQUEST);
         }
 
-        if(userService.changeIntroduction(param.get("new_introduction"), userId)) {
+        if(userService.changeIntroduction(newIntroduction, userId)) {
             return ResponseEntity.ok().build();
         } else {
             throw new AppException("자기소개 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);

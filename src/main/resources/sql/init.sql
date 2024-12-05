@@ -39,7 +39,7 @@ CREATE TABLE "user" (
 CREATE TABLE rating (
                         rating_key serial PRIMARY KEY,
                         score int NOT NULL DEFAULT 1,
-                        comment varchar NOT NULL DEFAULT '',
+                        comment TEXT NOT NULL DEFAULT '',
                         tag_key varchar(50) NOT NULL DEFAULT '000000000000000000000000',
                         cast_score FLOAT NOT NULL DEFAULT 0,
                         boardgame_key int NOT NULL,  -- 외래 키 추가
