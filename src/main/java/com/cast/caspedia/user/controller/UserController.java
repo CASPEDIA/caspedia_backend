@@ -88,7 +88,23 @@ public class UserController {
         }
     }
 
-//    //닉네임 변경
+    // 닉네임 중복확인
+    @PostMapping("/nickname")
+    public ResponseEntity<?> checkNickname(@RequestBody Map<String, String> params) {
+        //인증된 사용자 정보 확인
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //닉네임 허용 가능 확인
+        nicknameChecker(params);
+
+        return ResponseEntity.ok().build();
+    }
+
+    // 닉네임 변경
     @PutMapping("/nickname")
     public ResponseEntity<?> changeNickname(@RequestBody Map<String, String> params) {
         //인증된 사용자 정보 확인
@@ -99,22 +115,9 @@ public class UserController {
         }
 
         //닉네임 누락 확인
-        String newNickname = params.get("new_nickname");
-        if(newNickname == null || newNickname.trim().isEmpty()) {
-            throw new AppException("닉네임이 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
-        }
+        nicknameChecker(params);
 
-        //닉네임 중복 확인
-        if(!userService.isUniqueNickname(newNickname)) {
-            throw new AppException("이미 존재하는 닉네임입니다.", HttpStatus.BAD_REQUEST);
-        }
-
-        //닉네임 길이 확인
-        if(!userService.isValidNickname(newNickname)) {
-            throw new AppException("닉네임은 20자 이내의 한글, 영어, 숫자, '_', '.'만 가능합니다.", HttpStatus.BAD_REQUEST);
-        }
-
-        if(userService.changeNickname(newNickname, userId)) {
+        if(userService.changeNickname(params.get("new_nickname"), userId)) {
             return ResponseEntity.ok().build();
         } else {
             throw new AppException("닉네임 변경에 실패하였습니다.", HttpStatus.BAD_REQUEST);
@@ -178,6 +181,24 @@ public class UserController {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private void nicknameChecker(Map<String, String> params) {
+        //닉네임 누락 확인
+        String newNickname = params.get("new_nickname");
+        if(newNickname == null || newNickname.trim().isEmpty()) {
+            throw new AppException("닉네임이 비어 있거나 누락되었습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //닉네임 중복 확인
+        if(!userService.isUniqueNickname(newNickname)) {
+            throw new AppException("이미 존재하는 닉네임입니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //닉네임 길이 확인
+        if(!userService.isValidNickname(newNickname)) {
+            throw new AppException("닉네임은 20자 이내의 한글, 영어, 숫자, '_', '.'만 가능합니다.", HttpStatus.BAD_REQUEST);
         }
     }
 }
