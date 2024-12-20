@@ -67,7 +67,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             try {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.setContentType("application/json");
-                response.getWriter().write("{\"message\": \"로그인에 실패했습니다.\"}");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("""
+                        {
+                            "message": "로그인에 실패했습니다."
+                        }
+                        """);
             } catch (IOException ioException) {
                 // 에러 발생 시에도 로그를 최소화
                 log.warn("Failed to write authentication error response.");
@@ -97,6 +102,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.setHeader(JwtContstants.TOKEN_HEADER, JwtContstants.TOKEN_PREFIX + jwt);
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         response.getWriter().write("""
                 {
                     "token": "%s" ,

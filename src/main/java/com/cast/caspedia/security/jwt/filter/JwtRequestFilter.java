@@ -49,7 +49,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (header == null || header.length() == 0 || !header.startsWith(SecurityConstants.TOKEN_PREFIX)) {
             filterChain.doFilter(request, response);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"message\": \"유효하지 않은 토큰입니다.\"}");
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("""
+                        {
+                            "message": "유효하지 않은 토큰입니다."
+                        }
+                        """);
             return;
         }
 
@@ -69,7 +75,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         } else {
             log.info("만료된 JWT 토큰입니다.");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"message\": \"만료된 토큰입니다.\"}");
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("""
+                        {
+                            "message": "만료된 토큰입니다."
+                        }
+                        """);
             return;
         }
 
