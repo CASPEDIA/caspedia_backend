@@ -32,9 +32,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String requestPath = request.getRequestURI();
-        if ("/api/user/login".equals(requestPath) || "/api/admin/join".equals(requestPath)) {
-            // 로그인, 회원가입 요청은 토큰 검증을 하지 않음
-            log.info("로그인, 회원가입 요청은 토큰 검증을 하지 않습니다.");
+        if ("/api/user/login".equals(requestPath)) {
+            // 로그인 요청은 토큰 검증을 하지 않음
+            log.info("로그인 요청은 토큰 검증을 하지 않습니다.");
             filterChain.doFilter(request, response);
             return;
         }
@@ -49,8 +49,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (header == null || header.length() == 0 || !header.startsWith(SecurityConstants.TOKEN_PREFIX)) {
             filterChain.doFilter(request, response);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Invalid token");
-
+            response.getWriter().write("{\"message\": \"유효하지 않은 토큰입니다.\"}");
             return;
         }
 
@@ -70,7 +69,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         } else {
             log.info("만료된 JWT 토큰입니다.");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token expired");
+            response.getWriter().write("{\"message\": \"만료된 토큰입니다.\"}");
             return;
         }
 

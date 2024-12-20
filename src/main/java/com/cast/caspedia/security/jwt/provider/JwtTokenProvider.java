@@ -105,15 +105,21 @@ public class JwtTokenProvider {
             List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
             // 토큰 유효하면
-            // name, email 도 담아주기
+            // name, enabled 추가 정보 조회
             try {
                 User userInfo = userRepository.findUserById(userId);
                 if( userInfo != null ) {
                     user.setName(userInfo.getName());
+                    user.setEnabled(userInfo.isEnabled());
                 }
             } catch (Exception e) {
                 log.error(e.getMessage());
                 log.error("토큰 유효 -> DB 추가 정보 조회시 에러 발생...");
+            }
+
+            // 사용자가 삭제된경우 null 반환
+            if(!user.isEnabled()) {
+                return null;
             }
 
             CustomUserDetails userDetails = new CustomUserDetails(user);

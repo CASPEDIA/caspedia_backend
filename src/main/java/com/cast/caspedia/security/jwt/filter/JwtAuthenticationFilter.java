@@ -67,7 +67,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             try {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.setContentType("application/json");
-                response.getWriter().write("{\"message\": \"Failed to login.\"}");
+                response.getWriter().write("{\"message\": \"로그인에 실패했습니다.\"}");
             } catch (IOException ioException) {
                 // 에러 발생 시에도 로그를 최소화
                 log.warn("Failed to write authentication error response.");
@@ -100,8 +100,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.getWriter().write("""
                 {
                     "token": "%s" ,
-                    "nanoid": "%s"
+                    "nanoid": "%s",
+                    "authority": "%s"
                 }
-                """.formatted(jwt, nanoid));
+                """.formatted(jwt, nanoid, userRole));
     }
 }

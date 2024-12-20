@@ -12,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/admin")
 @Slf4j
@@ -23,17 +25,14 @@ public class AdminController {
     @Autowired
     private UserService userService;
 
+    // 회원 등록
     @PostMapping("/join")
     public ResponseEntity<?> joinUser(@RequestBody JoinRequestDto joinRequestDto) throws Exception {
-        
-        log.info("들어옴");
-        log.info("joinRequestDto: {}", joinRequestDto);
-
+        if(!checkAdmin()) {
+            throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
         if(adminService.join(joinRequestDto) != null) {
-            log.info("join");
-//            User user = userService;
-
-            return ResponseEntity.ok("join");
+            return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.badRequest().build();
         }
@@ -42,12 +41,56 @@ public class AdminController {
     // 모든 유저 정보 조회
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if(authentication.getAuthorities().stream().anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN"))) {
+        if(checkAdmin()) {
             return ResponseEntity.ok(adminService.getAllUsers());
         } else {
             throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
+    }
+
+    //회원 정보 수정
+    @PutMapping("/user")
+    public ResponseEntity<?> updateUser(@RequestBody Map<String, String> params) {
+        if(!checkAdmin()) {
+            throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+        userService.updateUser(params);
+        return ResponseEntity.ok().build();
+    }
+
+    //회원 정보 삭제
+    @DeleteMapping("/user")
+    public ResponseEntity<?> deleteUser(@RequestParam(required = false) String nanoid) {
+        if(!checkAdmin()) {
+            throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+        if(nanoid == null) {
+            throw new AppException("nanoid값이 필요합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        userService.deleteUser(nanoid);
+        return ResponseEntity.ok().build();
+    }
+
+    //회원 비밀번호 초기화
+    @PutMapping("/reset")
+    public ResponseEntity<?> resetPassword(@RequestParam(required = false) String nanoid) {
+        if(!checkAdmin()) {
+            throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        if(nanoid == null) {
+            throw new AppException("nanoid값이 필요합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        userService.resetPassword(nanoid);
+        return ResponseEntity.ok().build();
+    }
+
+
+    // admin 권한 확인
+    public boolean checkAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication.getAuthorities().stream().anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN"));
     }
 }

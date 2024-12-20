@@ -5,9 +5,6 @@ import com.cast.caspedia.security.jwt.filter.JwtAuthenticationFilter;
 import com.cast.caspedia.security.jwt.filter.JwtRequestFilter;
 import com.cast.caspedia.security.jwt.provider.JwtTokenProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +22,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -82,9 +81,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/user/login").permitAll()
                 .requestMatchers("/api/user/join").permitAll()
 
-                // test : 관리자 회원가입 요청은 인증 없이 허용
-                .requestMatchers("/api/admin/join").permitAll()
-
+//                // test : 관리자 회원가입 요청은 인증 없이 허용
+//                .requestMatchers("/api/admin/join").permitAll()
 //                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // 그 외 모든 요청은 인증 필요
                 .anyRequest().authenticated())

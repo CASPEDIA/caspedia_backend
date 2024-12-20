@@ -25,6 +25,10 @@ public class CustomUserDetailService implements UserDetailsService {
             throw new UsernameNotFoundException("User not found");
         }
 
+        if(!user.isEnabled()) {
+            throw new UsernameNotFoundException("User is not enabled");
+        }
+
         return new CustomUserDetails(user);
     }
 }
