@@ -1,6 +1,8 @@
 package com.cast.caspedia.rating.repository;
 
 import com.cast.caspedia.boardgame.domain.Boardgame;
+import com.cast.caspedia.dashboard.dto.RecentRatedBoardgameResponseDto;
+import com.cast.caspedia.dashboard.dto.RecentRatedUserResponseDto;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,4 +41,18 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
 
     @Query("SELECT r FROM Rating r WHERE r.boardgame = :boardgame")
     List<Rating> findAllRatingByBoardgame(Boardgame boardgame);
+
+    @Query("select new com.cast.caspedia.dashboard.dto.RecentRatedBoardgameResponseDto(r.boardgame.boardgameKey, r.boardgame.nameEng, r.boardgame.nameKor, r.boardgame.imageUrl, max(r.createdAt), max(r.updatedAt)) " +
+            "from Rating r " +
+            "group by r.boardgame.boardgameKey, r.boardgame.nameEng, r.boardgame.nameKor, r.boardgame.imageUrl " +
+            "order by max(r.updatedAt) desc")
+    List<RecentRatedBoardgameResponseDto> findRecentRatedBoardgame();
+
+
+    @Query("select new com.cast.caspedia.dashboard.dto.RecentRatedUserResponseDto(r.user.nanoid, r.user.nickname, r.user.userImage.userImageKey, max(r.createdAt), max(r.updatedAt)) " +
+            "from Rating r " +
+            "group by r.user.nanoid, r.user.nickname, r.user.userImage.userImageKey " +
+            "order by max(r.updatedAt) desc")
+    List<RecentRatedUserResponseDto> findRecentRatedUser();
+
 }
