@@ -45,8 +45,11 @@ public class AdminService {
             user.setPassword(encodedPw);
             user.setStudentId(joinRequestDto.getStudentId());
             user.setAuthority(authorityRepository.findByAuthorityKey(joinRequestDto.getAuthorityKey()));
-            user.setUserImage(userImageRepository.findByUserImageKey(joinRequestDto.getUserImageKey()));
             user.setIntroduction("안녕하세요! caspedia에 오신 것을 환영합니다.");
+            user.setEnabled(joinRequestDto.isEnabled());
+
+            // 유저 이미지 기본 설정 기본은 1번
+            user.setUserImage(userImageRepository.findByUserImageKey(1));
 
             // 랜덤 닉네임 생성, 중복 체크
             String nickname = "user_" + (int)(Math.random() * 100000);
