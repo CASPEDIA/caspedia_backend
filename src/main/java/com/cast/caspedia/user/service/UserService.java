@@ -209,19 +209,14 @@ public class UserService {
         try {
             String nanoid = params.get("nanoid");
             String nickname = params.get("nickname");
-            String name = params.get("name");
             String introduction = params.get("introduction");
-            int userImageKey = Integer.parseInt(params.get("user_image_key"));
             boolean enabled = Boolean.parseBoolean(params.get("enabled"));
             int authorityKey = Integer.parseInt(params.get("authority_key"));
 
             User user = userRepository.findByNanoid(nanoid);
-            UserImage userImage = UserImageRepository.findById(userImageKey).get();
 
             user.setNickname(nickname);
-            user.setName(name);
             user.setIntroduction(introduction);
-            user.setUserImage(userImage);
             user.setEnabled(enabled);
             user.setAuthority(authorityRepository.findById(authorityKey).get());
 
