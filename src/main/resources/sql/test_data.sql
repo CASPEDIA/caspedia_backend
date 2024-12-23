@@ -70,3 +70,10 @@ CREATE TABLE boardgame_mechanic (
 
 ALTER TABLE caspedia.public."rating"
     ALTER COLUMN comment TYPE TEXT;
+
+-- unique constraint 추가
+ALTER TABLE caspedia.public."user"
+    ADD CONSTRAINT user_nanoid_unique UNIQUE (nanoid);
+
+ALTER TABLE caspedia.public."user"
+    ADD CONSTRAINT user_student_id_unique UNIQUE (student_id);

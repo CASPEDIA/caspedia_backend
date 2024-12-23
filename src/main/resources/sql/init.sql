@@ -25,9 +25,9 @@ CREATE TABLE "user" (
                         password varchar NOT NULL,
                         nickname varchar NOT NULL UNIQUE,
                         name varchar NOT NULL,
-                        nanoid varchar NOT NULL,
+                        nanoid varchar NOT NULL UNIQUE,
                         introduction TEXT NOT NULL DEFAULT '',
-                        student_id int NOT NULL,
+                        student_id int NOT NULL UNIQUE,
                         enabled boolean NOT NULL DEFAULT true,
                         authority_key int NOT NULL,  -- 외래 키 추가
                         user_image_key int NOT NULL,  -- 외래 키 추가

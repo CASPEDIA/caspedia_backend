@@ -15,9 +15,7 @@ public class JoinRequestDto {
      */
     private String id;
     private String name;
-    private String password;
     private int studentId;
-    private String nickname;
     private int authorityKey;
     private int userImageKey;
 }

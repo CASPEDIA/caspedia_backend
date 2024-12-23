@@ -66,4 +66,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Modifying
     @Query("UPDATE User u SET u.password = :encodedPw WHERE u.id = :userId")
     int updatePasswordById(String encodedPw, String userId);
+
+    @Query("SELECT count(u)>0 FROM User u WHERE u.nanoid = :nanoid")
+    boolean existsByNanoid(String nanoid);
 }

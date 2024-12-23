@@ -30,7 +30,7 @@ public class User {
     @Column(name = "introduction", length = 300, nullable = false)
     private String introduction;
 
-    @Column(name = "student_id", nullable = false)
+    @Column(name = "student_id", nullable = false, unique = true)
     private int studentId;
 
     @Column(name = "enabled", nullable = false)
@@ -50,7 +50,7 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @Column(name = "nanoid")
+    @Column(name = "nanoid",nullable = false, unique = true)
     private String nanoid;
 
     // Getters and Setters
