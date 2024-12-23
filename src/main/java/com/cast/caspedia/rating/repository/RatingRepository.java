@@ -5,6 +5,8 @@ import com.cast.caspedia.dashboard.dto.RecentRatedBoardgameResponseDto;
 import com.cast.caspedia.dashboard.dto.RecentRatedUserResponseDto;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -46,13 +48,13 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
             "from Rating r " +
             "group by r.boardgame.boardgameKey, r.boardgame.nameEng, r.boardgame.nameKor, r.boardgame.imageUrl " +
             "order by max(r.updatedAt) desc")
-    List<RecentRatedBoardgameResponseDto> findRecentRatedBoardgame();
+    Page<RecentRatedBoardgameResponseDto> findRecentRatedBoardgame(Pageable pageable);
 
 
     @Query("select new com.cast.caspedia.dashboard.dto.RecentRatedUserResponseDto(r.user.nanoid, r.user.nickname, r.user.userImage.userImageKey, max(r.createdAt), max(r.updatedAt)) " +
             "from Rating r " +
             "group by r.user.nanoid, r.user.nickname, r.user.userImage.userImageKey " +
             "order by max(r.updatedAt) desc")
-    List<RecentRatedUserResponseDto> findRecentRatedUser();
+    Page<RecentRatedUserResponseDto> findRecentRatedUser(Pageable pageable);
 
 }
