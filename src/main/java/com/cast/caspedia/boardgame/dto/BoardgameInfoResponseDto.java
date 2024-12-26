@@ -2,6 +2,8 @@ package com.cast.caspedia.boardgame.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class BoardgameInfoResponseDto {
     private int boardgameKey;
@@ -18,4 +20,8 @@ public class BoardgameInfoResponseDto {
     private float geekScore;
     private float castScore;
     private int age;
+
+    private String designer;
+    private List<String> category;
+    private List<String> mechanic;
 }

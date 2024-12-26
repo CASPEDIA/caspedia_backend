@@ -2,6 +2,8 @@ package com.cast.caspedia.boardgame.service;
 
 import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.dto.*;
+import com.cast.caspedia.boardgame.repository.BoardgameCategoryRepository;
+import com.cast.caspedia.boardgame.repository.BoardgameMechanicRepository;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
 import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.boardgame.util.KoreanMatcher;
@@ -42,10 +44,11 @@ public class BoardgameService {
 
     KoreanMatcher koreanMatcher;
 
+    BoardgameMechanicRepository boardgameMechanicRepository;
 
+    BoardgameCategoryRepository boardgameCategoryRepository;
 
-
-    public BoardgameService(BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingRepository ratingRepository) {
+    public BoardgameService(BoardgameMechanicRepository boardgameMechanicRepository, BoardgameCategoryRepository boardgameCategoryRepository, BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingRepository ratingRepository) {
         this.boardgameRepository = boardgameRepository;
         this.koreanMatcher = koreanMatcher;
         this.likeRepository = likeRepository;
@@ -53,6 +56,8 @@ public class BoardgameService {
         this.ratingTagRepository = ratingTagRepository;
         this.tagRepository = tagRepository;
         this.ratingRepository = ratingRepository;
+        this.boardgameMechanicRepository = boardgameMechanicRepository;
+        this.boardgameCategoryRepository = boardgameCategoryRepository;
     }
 
     public List<BoardgameAutoFillDto> autofill(String query) {
@@ -172,6 +177,13 @@ public class BoardgameService {
         dto.setGeekWeight((float) Math.round(boardgame.getGeekWeight() * 10) / 10);
         dto.setCastScore(boardgame.getCastScore());
         dto.setAge(boardgame.getAge());
+        dto.setDesigner(boardgame.getDesigner());
+
+        List<String> mechanic = boardgameMechanicRepository.findMechanicByBoardgame(boardgame);
+        List<String> category = boardgameCategoryRepository.findCategoryByBoardgame(boardgame);
+
+        dto.setMechanic(mechanic);
+        dto.setCategory(category);
 
         return dto;
     }
