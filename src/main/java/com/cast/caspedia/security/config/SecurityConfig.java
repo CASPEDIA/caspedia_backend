@@ -4,6 +4,7 @@ import com.cast.caspedia.security.custom.CustomUserDetailService;
 import com.cast.caspedia.security.jwt.filter.JwtAuthenticationFilter;
 import com.cast.caspedia.security.jwt.filter.JwtRequestFilter;
 import com.cast.caspedia.security.jwt.provider.JwtTokenProvider;
+import com.cast.caspedia.security.prop.FrontServerProp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -39,6 +40,9 @@ public class SecurityConfig {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private FrontServerProp frontServerProp;
 
     @Bean
     public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -99,7 +103,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true); // 인증 정보(쿠키 등)를 허용하려면 true 설정
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 프론트엔드 주소
+        configuration.setAllowedOrigins(frontServerProp.getUrlList()); // 프론트엔드 주소
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "HEAD"));
         configuration.setAllowedHeaders(List.of("*"));
 
