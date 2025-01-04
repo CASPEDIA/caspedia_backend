@@ -87,7 +87,6 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-
     // admin 권한 확인
     public boolean checkAdmin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

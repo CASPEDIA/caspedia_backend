@@ -2,6 +2,7 @@ package com.cast.caspedia.user.controller;
 
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.dto.RatingDto;
+import com.cast.caspedia.user.dto.IsAdminResponseDto;
 import com.cast.caspedia.user.dto.LikeDto;
 import com.cast.caspedia.user.dto.UserInfoDto;
 import com.cast.caspedia.user.dto.UserSearchDto;
@@ -182,6 +183,23 @@ public class UserController {
         } else {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    // admin 권한 확인
+    @GetMapping("/admin")
+    public ResponseEntity<?> isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String id = authentication.getName();
+        
+        if(id == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        if(!(authentication.getAuthorities().stream().anyMatch(r -> r.getAuthority().equals("ROLE_ADMIN")))) {
+            return ResponseEntity.ok(new IsAdminResponseDto(false));
+        }
+
+        return ResponseEntity.ok(new IsAdminResponseDto(true));
     }
 
     private void nicknameChecker(Map<String, String> params) {
