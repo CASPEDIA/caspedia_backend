@@ -44,7 +44,7 @@ public class JwtTokenProvider {
                 .header()                                                      // update (version : after 1.0)
                 .add("typ", JwtContstants.TOKEN_TYPE)              // 헤더 설정
                 .and()
-                .expiration(new Date(System.currentTimeMillis() + 864000000))  // 토큰 만료 시간 설정 (10일)
+                .expiration(new Date(System.currentTimeMillis() + 604800000))  // 토큰 만료 시간 설정 (7일)
                 .claim("uid", id)                                     // 클레임 설정: 사용자 아이디
                 .claim("rol", role)                                      // 클레임 설정: 권한
                 .claim("nid", nanoid)
