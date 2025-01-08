@@ -179,11 +179,11 @@ public class BoardgameService {
         dto.setAge(boardgame.getAge());
         dto.setDesigner(boardgame.getDesigner());
 
-        List<String> mechanic = boardgameMechanicRepository.findMechanicByBoardgame(boardgame);
-        List<String> category = boardgameCategoryRepository.findCategoryByBoardgame(boardgame);
+        List<String> categoryNames = boardgameCategoryRepository.findKoreanCategoryNamesByBoardgame(boardgame);
+        List<String> mechanicNames = boardgameMechanicRepository.findKoreanMechanicNamesByBoardgame(boardgame);
 
-        dto.setMechanic(mechanic);
-        dto.setCategory(category);
+        dto.setCategory(categoryNames);
+        dto.setMechanic(mechanicNames);
 
         return dto;
     }
@@ -193,7 +193,6 @@ public class BoardgameService {
         if(boardgame == null) {
             throw new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
-        TagCountsResponseDto dto = new TagCountsResponseDto();
 
         List<Rating> ratings = ratingRepository.findAllRatingByBoardgame(boardgame);
 

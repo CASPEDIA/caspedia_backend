@@ -77,3 +77,17 @@ ALTER TABLE caspedia.public."user"
 
 ALTER TABLE caspedia.public."user"
     ADD CONSTRAINT user_student_id_unique UNIQUE (student_id);
+
+create table boardgame_mechanic_kor
+(
+    id SERIAL PRIMARY KEY,
+    mechanic_id integer,
+    name text
+);
+
+create table boardgame_category_kor
+(
+    id SERIAL PRIMARY KEY,
+    category_id integer,
+    name text
+);

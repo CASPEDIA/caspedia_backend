@@ -122,6 +122,19 @@ CREATE TABLE boardgame_mechanic (
                                     mechanic_value TEXT
 );
 
+create table boardgame_mechanic_kor
+(
+    id SERIAL PRIMARY KEY,
+    mechanic_id integer,
+    name text
+);
+
+create table boardgame_category_kor
+(
+    id SERIAL PRIMARY KEY,
+    category_id integer,
+    name text
+);
 
 -- 외래 키 설정
 -- rating 테이블의 user_key가 user 테이블의 user_key를 참조
