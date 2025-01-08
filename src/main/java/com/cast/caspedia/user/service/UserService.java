@@ -83,10 +83,10 @@ public class UserService {
         int byteLength = 0;
 
         for (char ch : nickname.toCharArray()) {
-            if (Character.toString(ch).matches("[가-힣]")) {
-                byteLength += 2; // 한글은 2바이트
-            } else if (Character.toString(ch).matches("[a-zA-Z0-9_.]")) {
-                byteLength += 1; // 영어, 숫자, '_', '.'은 1바이트
+            if (Character.toString(ch).matches("[가-힣A-Z]")) {
+                byteLength += 2; // 한글,영어대문자는 2바이트
+            } else if (Character.toString(ch).matches("[a-z0-9_.]")) {
+                byteLength += 1; // 영어소문자, 숫자, '_', '.'은 1바이트
             } else {
                 // 허용되지 않는 문자 발견 시 false 반환
                 return false;
