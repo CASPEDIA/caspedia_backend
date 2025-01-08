@@ -24,7 +24,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     //유저검색 자동완성
     @Query("SELECT new com.cast.caspedia.user.dto.UserSearchDto(u.nickname, u.name, u.id, u.nanoid) " +
-            "FROM User u WHERE u.nickname LIKE %:keyword% and u.enabled = true and u.authority.authorityKey = 2")
+            "FROM User u WHERE u.nickname LIKE %:keyword% and u.enabled = true " +
+            "OR u.name LIKE %:keyword% and u.enabled = true " +
+            "and u.authority.authorityKey = 2")
     List<UserSearchDto> findByNicknameLike(String keyword);
 
     //유저정보조회
