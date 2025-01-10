@@ -96,6 +96,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String userId = userDetails.getUser().getId();
         String userRole = userDetails.getUser().getAuthority().getRole();
         String nanoid = userDetails.getUser().getNanoid();
+        int imageKey = userDetails.getUser().getUserImage().getUserImageKey();
 
         // JWT 생성
         String jwt = jwtTokenProvider.createToken(userId, userRole, nanoid);
@@ -107,8 +108,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 {
                     "token": "%s" ,
                     "nanoid": "%s",
-                    "authority": "%s"
+                    "authority": "%s",
+                    "user_image_key": %d
                 }
-                """.formatted(jwt, nanoid, userRole));
+                """.formatted(jwt, nanoid, userRole, imageKey));
     }
 }
