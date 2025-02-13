@@ -32,5 +32,6 @@ public class BoardgameSearchDto {
         private int likes;
         private float geekScore;
         private float castScore;
+        private int yearPublished;
     }
 }

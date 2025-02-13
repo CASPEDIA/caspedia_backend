@@ -85,6 +85,7 @@ public class BoardgameService {
                 data.setNameKor(boardgame.getNameKor());
                 data.setNameEng(boardgame.getNameEng());
                 data.setLikes(likeRepository.countLikeByBoardgame(boardgame));
+                data.setYearPublished(boardgame.getYearPublished());
                 //소수점 첫째 자리까지만 반환
                 data.setGeekScore((float) Math.round(boardgame.getGeekScore() * 10) / 10);
                 data.setCastScore(boardgame.getCastScore());
