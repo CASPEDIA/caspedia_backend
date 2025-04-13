@@ -6,6 +6,7 @@ import com.cast.caspedia.user.dto.UserSearchDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +28,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             "FROM User u WHERE u.nickname LIKE %:keyword% and u.enabled = true " +
             "OR u.name LIKE %:keyword% and u.enabled = true " +
             "and u.authority.authorityKey = 2")
-    List<UserSearchDto> findByNicknameLike(String keyword);
+    List<UserSearchDto> findByNicknameLike(@Param("keyword") String keyword);
 
     //유저정보조회
     public User findByNickname(String nickname);
@@ -38,37 +39,37 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Modifying
     @Transactional
     @Query("UPDATE User u SET u.password = :password WHERE u.nanoid = :nanoid")
-    int updatePasswordByNanoid(String password, String nanoid);
+    int updatePasswordByNanoid(@Param("password") String password, @Param("nanoid") String nanoid);
 
     //닉네임 변경
     @Modifying
     @Transactional
     @Query("UPDATE User u SET u.nickname = :newNickname WHERE u.id = :userId")
-    int updateNicknamebyId(String newNickname, String userId);
+    int updateNicknamebyId(@Param("newNickname") String newNickname, @Param("userId") String userId);
 
     //자기소개 변경
     @Modifying
     @Transactional
     @Query("UPDATE User u SET u.introduction = :introduction WHERE u.id = :id")
-    int updateIntroductionById(String introduction, String id);
+    int updateIntroductionById(@Param("introduction") String introduction, @Param("id") String id);
 
 
     @Modifying
     @Transactional
     @Query("UPDATE User u SET u.userImage = :userImage WHERE u.id = :id")
-    int updateUserImageById(UserImage userImage, String id);
+    int updateUserImageById(@Param("userImage") UserImage userImage, @Param("id") String id);
 
     @Query("SELECT u FROM User u WHERE u.id = :userId")
-    User findUserByUserId(String userId);
+    User findUserByUserId(@Param("userId") String userId);
 
     @Query("SELECT count(u)>0 FROM User u WHERE u.nickname = :newNickname")
-    boolean existsByNickname(String newNickname);
+    boolean existsByNickname(@Param("newNickname") String newNickname);
 
     @Transactional
     @Modifying
     @Query("UPDATE User u SET u.password = :encodedPw WHERE u.id = :userId")
-    int updatePasswordById(String encodedPw, String userId);
+    int updatePasswordById(@Param("encodedPw") String encodedPw, @Param("userId") String userId);
 
     @Query("SELECT count(u)>0 FROM User u WHERE u.nanoid = :nanoid")
-    boolean existsByNanoid(String nanoid);
+    boolean existsByNanoid(@Param("nanoid") String nanoid);
 }

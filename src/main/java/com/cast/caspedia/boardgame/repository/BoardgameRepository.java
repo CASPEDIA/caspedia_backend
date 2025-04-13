@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
@@ -40,14 +41,14 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
             "FROM Boardgame b " +
             "WHERE LOWER(REPLACE(b.nameEng, ' ', '')) LIKE LOWER(REPLACE(CONCAT('%', :query, '%'), ' ', '')) " +
             "ORDER BY b.boardgameKey")
-    Page<BoardgameAutoFillDto> autofillEng(String query, Pageable pageable);
+    Page<BoardgameAutoFillDto> autofillEng(@Param("query") String query, Pageable pageable);
 
 
     @Query("SELECT new com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto(b.boardgameKey, b.nameKor, b.yearPublished) " +
             "FROM Boardgame b " +
             "WHERE REPLACE(b.nameKor, ' ', '') LIKE REPLACE(CONCAT('%', :query, '%'), ' ', '') " +
             "order by b.boardgameKey")
-    Page<BoardgameAutoFillDto> autofillKor(String query, Pageable pageable);
+    Page<BoardgameAutoFillDto> autofillKor(@Param("query") String query, Pageable pageable);
 
 
     //보드게임 이름으로 검색
@@ -56,6 +57,6 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
             "WHERE LOWER(REPLACE(b.nameEng, ' ', '')) LIKE LOWER(REPLACE(CONCAT('%', :query, '%'), ' ', '')) " +
             "OR REPLACE(b.nameKor, ' ', '') LIKE REPLACE(CONCAT('%', :query, '%'), ' ', '') " +
             "ORDER BY b.boardgameKey")
-    Page<Boardgame> search(String query, Pageable pageable);
+    Page<Boardgame> search(@Param("query") String query, Pageable pageable);
 
 }

@@ -39,10 +39,10 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
     Rating findByUserIdAndBoardgameKey(@Param("userId") String userId, @Param("boardgameKey") Integer boardgameKey);
 
     @Query("SELECT r.score FROM Rating r WHERE r.boardgame.boardgameKey = :boardgameKey")
-    List<Integer> findRatingByBoardgameKey(Integer boardgameKey);
+    List<Integer> findRatingByBoardgameKey(@Param("boardgameKey") Integer boardgameKey);
 
     @Query("SELECT r FROM Rating r WHERE r.boardgame = :boardgame")
-    List<Rating> findAllRatingByBoardgame(Boardgame boardgame);
+    List<Rating> findAllRatingByBoardgame(@Param("boardgame") Boardgame boardgame);
 
     @Query("select new com.cast.caspedia.dashboard.dto.RecentRatedBoardgameResponseDto(r.boardgame.boardgameKey, r.boardgame.nameEng, r.boardgame.nameKor, r.boardgame.imageUrl, max(r.createdAt), max(r.updatedAt)) " +
             "from Rating r " +
