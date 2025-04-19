@@ -4,10 +4,13 @@ import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
+import com.cast.caspedia.rating.domain.RatingReq;
 import com.cast.caspedia.rating.dto.RatingExistResponseDto;
 import com.cast.caspedia.rating.dto.RatingNoExistResponseDto;
+import com.cast.caspedia.rating.dto.RatingReqResponseDto;
 import com.cast.caspedia.rating.dto.RatingRequestDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
+import com.cast.caspedia.rating.repository.RatingReqRepository;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -25,13 +30,15 @@ public class RatingService {
 
     RatingRepository ratingRepository;
 
-
     BoardgameRepository boardgameRepository;
 
-    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository) {
+    RatingReqRepository ratingReqRepository;
+
+    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository) {
         this.userRepository = userRepository;
         this.ratingRepository = ratingRepository;
         this.boardgameRepository = boardgameRepository;
+        this.ratingReqRepository = ratingReqRepository;
     }
 
     @Transactional
@@ -151,5 +158,46 @@ public class RatingService {
             ratingExistResponseDto.setImageUrl(rating.getBoardgame().getImageUrl());
             return ratingExistResponseDto;
         }
+    }
+
+    public void addRatingReq(String userId, Integer boardgamekey) {
+
+        // 보드게임이 존재하는지 확인
+        Boardgame boardgame = boardgameRepository.findById(boardgamekey)
+                .orElseThrow(() -> new AppException("보드게임을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST));
+
+        // 같은 게임 평가 요청이 7일 이내에 있는지 확인
+        if(ratingReqRepository.existsByBoardgame_BoardgameKeyAndCreatedAtAfter(boardgamekey, LocalDateTime.now().minusDays(7))) {
+            throw new AppException("7일 이내 생성된 리뷰 요청이 존재합니다.", HttpStatus.CONFLICT);
+        }
+
+        // userId로 User 엔티티 조회
+        User user = userRepository.findUserByUserId(userId);
+
+        RatingReq ratingReq = new RatingReq();
+        ratingReq.setBoardgame(boardgame);
+        ratingReq.setUser(user);
+        ratingReqRepository.save(ratingReq);
+        log.info("RatingReq saved: {}", ratingReq);
+    }
+
+    public List<RatingReqResponseDto> getRatingReq() {
+        List<RatingReq> list = ratingReqRepository.findAllByCreatedAtAfter(LocalDateTime.now().minusDays(7));
+
+        List<RatingReqResponseDto> responseDtos = new ArrayList<>();
+
+        for(RatingReq ratingReq : list) {
+            responseDtos.add(RatingReqResponseDto.builder()
+                            .reqKey(ratingReq.getReqKey())
+                            .boardgameKey(ratingReq.getBoardgame().getBoardgameKey())
+                            .nanoid(ratingReq.getUser().getNanoid())
+                            .nickname(ratingReq.getUser().getNickname())
+                            .userImageKey(ratingReq.getUser().getUserImage().getUserImageKey())
+                            .createdAt(ratingReq.getCreatedAt())
+                            .build()
+            );
+        }
+
+        return responseDtos;
     }
 }

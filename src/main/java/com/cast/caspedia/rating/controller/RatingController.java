@@ -140,4 +140,27 @@ public class RatingController {
             throw new AppException("평점 정보를 가져오는데 실패하였습니다.", HttpStatus.BAD_REQUEST);
         }
     }
+
+    // 보드게임 리뷰 요청 api
+    @PostMapping("/req/{boardgamekey}")
+    public ResponseEntity<?> addRatingReq(@PathVariable Integer boardgamekey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        ratingService.addRatingReq(userId, boardgamekey);
+        return ResponseEntity.ok().build();
+    }
+
+    // 보드게임 리뷰 요청 리스트 api
+    @GetMapping("/req")
+    public ResponseEntity<?> getRatingReq() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        return ResponseEntity.ok(ratingService.getRatingReq());
+    }
 }
