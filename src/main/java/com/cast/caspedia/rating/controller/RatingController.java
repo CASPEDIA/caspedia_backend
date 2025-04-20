@@ -163,4 +163,32 @@ public class RatingController {
         }
         return ResponseEntity.ok(ratingService.getRatingReq());
     }
+
+    // 평점순위: cast_score 기준 top 5개
+    @GetMapping("/ranking/score/top5")
+    public ResponseEntity<?> getTop5Score() {
+        return ResponseEntity.ok(ratingService.getTopScore(5));
+    }
+
+    // 평점순위: cast_score 기준 top 100개
+    @GetMapping("/ranking/score/top100")
+    public ResponseEntity<?> getTop100Score() {
+        return ResponseEntity.ok(ratingService.getTopScore(100));
+    }
+
+    // 리뷰순위: 한달 top 5개
+    @GetMapping("/ranking/count/top5")
+    public ResponseEntity<?> getTop5Count() {
+        return ResponseEntity.ok(ratingService.getTopCount(5, 30));
+    }
+
+    // 리뷰순위: top 100개 한달 30,세달 90,전체 0
+    @GetMapping("/ranking/count/top100")
+    public ResponseEntity<?> getTop100Count(@RequestParam int period) {
+        if(period != 0 && period != 30 && period != 90) {
+            throw new AppException("잘못된 요청입니다.", HttpStatus.BAD_REQUEST);
+        }
+        return ResponseEntity.ok(ratingService.getTopCount(100, period));
+    }
+
 }

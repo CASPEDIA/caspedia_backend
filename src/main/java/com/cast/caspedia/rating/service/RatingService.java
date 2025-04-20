@@ -2,18 +2,18 @@ package com.cast.caspedia.rating.service;
 
 import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
+import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.rating.domain.RatingReq;
-import com.cast.caspedia.rating.dto.RatingExistResponseDto;
-import com.cast.caspedia.rating.dto.RatingNoExistResponseDto;
-import com.cast.caspedia.rating.dto.RatingReqResponseDto;
-import com.cast.caspedia.rating.dto.RatingRequestDto;
+import com.cast.caspedia.rating.dto.*;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingReqRepository;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,11 +34,14 @@ public class RatingService {
 
     RatingReqRepository ratingReqRepository;
 
-    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository) {
+    LikeRepository likeRepository;
+
+    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository) {
         this.userRepository = userRepository;
         this.ratingRepository = ratingRepository;
         this.boardgameRepository = boardgameRepository;
         this.ratingReqRepository = ratingReqRepository;
+        this.likeRepository = likeRepository;
     }
 
     @Transactional
@@ -201,5 +204,52 @@ public class RatingService {
         }
 
         return responseDtos;
+    }
+
+    public List<RankingResponseDto> getTopScore(int count) {
+        Pageable top = PageRequest.of(0, count);
+        List<Boardgame> best = boardgameRepository.findAllByOrderByCastScoreDesc(top);
+        return boardgameToRankingResponseDtos(best);
+    }
+
+    public List<RankingResponseDto> getTopCount(int count, int period) {
+        //1개월
+        if(period == 30) {
+            LocalDateTime since = LocalDateTime.now().minusMonths(1);
+            PageRequest pageRequest = PageRequest.of(0, count);
+            return boardgameToRankingResponseDtos(boardgameRepository.findTopByPeriodRatingCount(since, pageRequest));
+
+        //3개월
+        }else if(period == 90) {
+            LocalDateTime since = LocalDateTime.now().minusMonths(3);
+            PageRequest pageRequest = PageRequest.of(0, count);
+            return boardgameToRankingResponseDtos(boardgameRepository.findTopByPeriodRatingCount(since, pageRequest));
+
+        //전체기간 조회
+        }else {
+            PageRequest pageRequest = PageRequest.of(0, count);
+            return boardgameToRankingResponseDtos(boardgameRepository.findTopByRatingCount(pageRequest));
+        }
+    }
+
+    public List<RankingResponseDto> boardgameToRankingResponseDtos(List<Boardgame> boardgames) {
+        List<RankingResponseDto> rankingResponseDtos = new ArrayList<>();
+
+        int ranking = 1;
+        for (Boardgame boardgame : boardgames) {
+            RankingResponseDto rankingResponseDto = RankingResponseDto.builder()
+                    .ranking(ranking++)
+                    .boardgameKey(boardgame.getBoardgameKey())
+                    .imageUrl(boardgame.getImageUrl())
+                    .nameKor(boardgame.getNameKor())
+                    .nameEng(boardgame.getNameEng())
+                    .likes(likeRepository.countLikeByBoardgame(boardgame))
+                    .geekScore(boardgame.getGeekScore())
+                    .castScore(boardgame.getCastScore())
+                    .build();
+            rankingResponseDtos.add(rankingResponseDto);
+        }
+
+        return rankingResponseDtos;
     }
 }

@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
 
     //보드게임 키로 업데이트
@@ -59,4 +62,33 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
             "ORDER BY b.boardgameKey")
     Page<Boardgame> search(@Param("query") String query, Pageable pageable);
 
+
+    //보드게임 랭킹순 조회
+    List<Boardgame> findAllByOrderByCastScoreDesc(Pageable pageable);
+
+    //보드게임 리뷰 갯수순 조회 (period)
+    @Query("""
+        SELECT b
+        FROM Boardgame b, Rating r
+        WHERE r.boardgame = b
+          AND r.createdAt >= :since
+        GROUP BY b
+        ORDER BY COUNT(r) DESC
+    """)
+    List<Boardgame> findTopByPeriodRatingCount(
+            @Param("since") LocalDateTime since,
+            Pageable pageable
+    );
+
+    //보드게임 리뷰 갯수순 조회
+    @Query("""
+        SELECT b
+        FROM Boardgame b, Rating r
+        WHERE r.boardgame = b
+        GROUP BY b
+        ORDER BY COUNT(r) DESC
+    """)
+    List<Boardgame> findTopByRatingCount(
+            Pageable pageable
+    );
 }
