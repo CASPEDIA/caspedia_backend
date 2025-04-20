@@ -192,6 +192,8 @@ public class RatingService {
                             .boardgameKey(ratingReq.getBoardgame().getBoardgameKey())
                             .nanoid(ratingReq.getUser().getNanoid())
                             .nickname(ratingReq.getUser().getNickname())
+                            .nameEng(ratingReq.getBoardgame().getNameEng())
+                            .nameKor(ratingReq.getBoardgame().getNameKor())
                             .userImageKey(ratingReq.getUser().getUserImage().getUserImageKey())
                             .createdAt(ratingReq.getCreatedAt())
                             .build()

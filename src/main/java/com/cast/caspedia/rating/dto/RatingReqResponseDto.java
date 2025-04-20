@@ -15,6 +15,12 @@ public class RatingReqResponseDto {
     @JsonProperty("boardgame_key")
     private int boardgameKey;
 
+    @JsonProperty("name_kor")
+    private String nameKor;
+
+    @JsonProperty("name_eng")
+    private String nameEng;
+
     private String nanoid;
 
     private String nickname;
