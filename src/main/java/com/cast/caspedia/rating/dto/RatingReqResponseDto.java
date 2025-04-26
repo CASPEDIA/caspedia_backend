@@ -21,6 +21,9 @@ public class RatingReqResponseDto {
     @JsonProperty("name_eng")
     private String nameEng;
 
+    @JsonProperty("image_url")
+    private String imageUrl;
+
     private String nanoid;
 
     private String nickname;

@@ -57,4 +57,5 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
             "order by max(r.updatedAt) desc")
     Page<RecentRatedUserResponseDto> findRecentRatedUser(Pageable pageable);
 
+    int countByBoardgame(Boardgame boardgame);
 }

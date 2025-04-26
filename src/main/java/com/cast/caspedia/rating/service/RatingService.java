@@ -197,6 +197,7 @@ public class RatingService {
                             .nickname(ratingReq.getUser().getNickname())
                             .nameEng(ratingReq.getBoardgame().getNameEng())
                             .nameKor(ratingReq.getBoardgame().getNameKor())
+                            .imageUrl(ratingReq.getBoardgame().getImageUrl())
                             .userImageKey(ratingReq.getUser().getUserImage().getUserImageKey())
                             .createdAt(ratingReq.getCreatedAt())
                             .build()
@@ -206,38 +207,18 @@ public class RatingService {
         return responseDtos;
     }
 
-    public List<RankingResponseDto> getTopScore(int count) {
+    public List<ScoreRankingResponseDto> getTopScore(int count) {
         Pageable top = PageRequest.of(0, count);
         List<Boardgame> best = boardgameRepository.findAllByOrderByCastScoreDesc(top);
-        return boardgameToRankingResponseDtos(best);
+        return boardgameToScoreRankingResponseDtos(best);
     }
 
-    public List<RankingResponseDto> getTopCount(int count, int period) {
-        //1개월
-        if(period == 30) {
-            LocalDateTime since = LocalDateTime.now().minusMonths(1);
-            PageRequest pageRequest = PageRequest.of(0, count);
-            return boardgameToRankingResponseDtos(boardgameRepository.findTopByPeriodRatingCount(since, pageRequest));
-
-        //3개월
-        }else if(period == 90) {
-            LocalDateTime since = LocalDateTime.now().minusMonths(3);
-            PageRequest pageRequest = PageRequest.of(0, count);
-            return boardgameToRankingResponseDtos(boardgameRepository.findTopByPeriodRatingCount(since, pageRequest));
-
-        //전체기간 조회
-        }else {
-            PageRequest pageRequest = PageRequest.of(0, count);
-            return boardgameToRankingResponseDtos(boardgameRepository.findTopByRatingCount(pageRequest));
-        }
-    }
-
-    public List<RankingResponseDto> boardgameToRankingResponseDtos(List<Boardgame> boardgames) {
-        List<RankingResponseDto> rankingResponseDtos = new ArrayList<>();
+    private List<ScoreRankingResponseDto> boardgameToScoreRankingResponseDtos(List<Boardgame> best) {
+        List<ScoreRankingResponseDto> rankingResponseDtos = new ArrayList<>();
 
         int ranking = 1;
-        for (Boardgame boardgame : boardgames) {
-            RankingResponseDto rankingResponseDto = RankingResponseDto.builder()
+        for (Boardgame boardgame : best) {
+            ScoreRankingResponseDto rankingResponseDto = ScoreRankingResponseDto.builder()
                     .ranking(ranking++)
                     .boardgameKey(boardgame.getBoardgameKey())
                     .imageUrl(boardgame.getImageUrl())
@@ -252,4 +233,48 @@ public class RatingService {
 
         return rankingResponseDtos;
     }
+
+    public List<ReviewRankingResponseDto> getTopCount(int count, int period) {
+        //1개월
+        if(period == 30) {
+            LocalDateTime since = LocalDateTime.now().minusMonths(1);
+            PageRequest pageRequest = PageRequest.of(0, count);
+            return boardgameToReviewRankingResponseDtos(boardgameRepository.findTopByPeriodRatingCount(since, pageRequest));
+
+        //3개월
+        }else if(period == 90) {
+            LocalDateTime since = LocalDateTime.now().minusMonths(3);
+            PageRequest pageRequest = PageRequest.of(0, count);
+            return boardgameToReviewRankingResponseDtos(boardgameRepository.findTopByPeriodRatingCount(since, pageRequest));
+
+        //전체기간 조회
+        }else {
+            PageRequest pageRequest = PageRequest.of(0, count);
+            return boardgameToReviewRankingResponseDtos(boardgameRepository.findTopByRatingCount(pageRequest));
+        }
+    }
+
+    public List<ReviewRankingResponseDto> boardgameToReviewRankingResponseDtos(List<Boardgame> boardgames) {
+        List<ReviewRankingResponseDto> rankingResponseDtos = new ArrayList<>();
+
+        int ranking = 1;
+        for (Boardgame boardgame : boardgames) {
+            ReviewRankingResponseDto rankingResponseDto = ReviewRankingResponseDto.builder()
+                    .ranking(ranking++)
+                    .boardgameKey(boardgame.getBoardgameKey())
+                    .imageUrl(boardgame.getImageUrl())
+                    .nameKor(boardgame.getNameKor())
+                    .nameEng(boardgame.getNameEng())
+                    .likes(likeRepository.countLikeByBoardgame(boardgame))
+                    .geekScore(boardgame.getGeekScore())
+                    .castScore(boardgame.getCastScore())
+                    .reviewCount(ratingRepository.countByBoardgame(boardgame))
+                    .build();
+            rankingResponseDtos.add(rankingResponseDto);
+        }
+
+        return rankingResponseDtos;
+    }
+
+
 }
