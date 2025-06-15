@@ -6,9 +6,12 @@ import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.rating.domain.RatingReq;
+import com.cast.caspedia.rating.domain.RatingTag;
 import com.cast.caspedia.rating.dto.*;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingReqRepository;
+import com.cast.caspedia.rating.repository.RatingTagRepository;
+import com.cast.caspedia.rating.repository.TagRepository;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +29,8 @@ import java.util.List;
 @Slf4j
 public class RatingService {
 
+    private final RatingTagRepository ratingTagRepository;
+    private final TagRepository tagRepository;
     UserRepository userRepository;
 
     RatingRepository ratingRepository;
@@ -36,12 +41,14 @@ public class RatingService {
 
     LikeRepository likeRepository;
 
-    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository) {
+    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository) {
         this.userRepository = userRepository;
         this.ratingRepository = ratingRepository;
         this.boardgameRepository = boardgameRepository;
         this.ratingReqRepository = ratingReqRepository;
         this.likeRepository = likeRepository;
+        this.ratingTagRepository = ratingTagRepository;
+        this.tagRepository = tagRepository;
     }
 
     @Transactional
@@ -56,7 +63,10 @@ public class RatingService {
         Rating rating = new Rating();
         rating.setScore(ratingRequestDto.getScore());
         rating.setComment(ratingRequestDto.getComment());
+
+        //TODO: ratingTag로 리펙토링
         rating.setTagKey(ratingRequestDto.getTags());
+        String tagKeyBitmasking = ratingRequestDto.getTags();
 
         // boardgameKey로 Boardgame 엔티티 조회
         Boardgame boardgame = boardgameRepository.findById(ratingRequestDto.getBoardgameKey())
@@ -77,6 +87,18 @@ public class RatingService {
 
         //rating 저장
         Rating savedRating = ratingRepository.save(rating);
+        // RatingTag 생성 및 저장
+        for(int i = 0; i < tagKeyBitmasking.length(); i++) {
+            if(tagKeyBitmasking.charAt(i) == '1') {
+                ratingTagRepository.save(
+                        RatingTag.builder()
+                                .rating(savedRating)
+                                .tag(tagRepository.findById(i + 1)
+                                        .orElseThrow(() -> new AppException("태그를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)))
+                                .build()
+                );
+            }
+        }
 
         // boardgame 엔티티에 평점 업데이트
         boardgame.setCastScore(calculateRating(ratingRequestDto.getBoardgameKey()));
@@ -98,10 +120,24 @@ public class RatingService {
         // Rating 엔티티 수정
         rating.setScore(ratingRequestDto.getScore());
         rating.setComment(ratingRequestDto.getComment());
+        //TODO: ratingTag로 리펙토링
         rating.setTagKey(ratingRequestDto.getTags());
+        String tagKeyBitmasking = ratingRequestDto.getTags();
 
         // rating 업데이트
-        ratingRepository.save(rating);
+        Rating savedRating = ratingRepository.save(rating);
+        // RatingTag 생성 및 저장
+        for(int i = 0; i < tagKeyBitmasking.length(); i++) {
+            if(tagKeyBitmasking.charAt(i) == '1') {
+                ratingTagRepository.save(
+                        RatingTag.builder()
+                                .rating(savedRating)
+                                .tag(tagRepository.findById(i + 1)
+                                        .orElseThrow(() -> new AppException("태그를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)))
+                                .build()
+                );
+            }
+        }
 
         // boardgame 엔티티에 평점 업데이트
         boardgame.setCastScore(calculateRating(ratingRequestDto.getBoardgameKey()));
@@ -139,29 +175,53 @@ public class RatingService {
     }
 
     //평가를 조회하는 메서드
-    public Object getRating(String userId, Integer boardgamekey) throws AppException{
-        if(!ratingRepository.existsByUserIdAndBoardgameKey(userId, boardgamekey)) {
-            Boardgame boardgame = boardgameRepository.findById(boardgamekey)
-                    .orElseThrow(() -> new AppException("보드게임을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST));
+    public Object getRating(String userId, Integer boardgameKey) throws AppException {
+        boolean ratingExists = ratingRepository.existsByUserIdAndBoardgameKey(userId, boardgameKey);
+
+        Boardgame boardgame = boardgameRepository.findById(boardgameKey)
+                .orElseThrow(() -> new AppException("보드게임을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST));
+
+        if (!ratingExists) {
+            // 평가가 없는 경우 응답
             RatingNoExistResponseDto ratingNoExistResponseDto = new RatingNoExistResponseDto();
             ratingNoExistResponseDto.setRatingExist(false);
             ratingNoExistResponseDto.setNameEng(boardgame.getNameEng());
             ratingNoExistResponseDto.setNameKor(boardgame.getNameKor());
             ratingNoExistResponseDto.setImageUrl(boardgame.getImageUrl());
             return ratingNoExistResponseDto;
-        }else {
-            Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgamekey);
-            RatingExistResponseDto ratingExistResponseDto = new RatingExistResponseDto();
-            ratingExistResponseDto.setRatingExist(true);
-            ratingExistResponseDto.setScore(rating.getScore());
-            ratingExistResponseDto.setComment(rating.getComment());
-            ratingExistResponseDto.setNameEng(rating.getBoardgame().getNameEng());
-            ratingExistResponseDto.setNameKor(rating.getBoardgame().getNameKor());
-            ratingExistResponseDto.setTagKey(rating.getTagKey());
-            ratingExistResponseDto.setImageUrl(rating.getBoardgame().getImageUrl());
-            return ratingExistResponseDto;
         }
+
+        // 평가가 있는 경우
+        Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgameKey);
+
+        // 태그 비트마스크 생성
+        long totalTagCount = tagRepository.count(); // 전체 태그 수
+        boolean[] bits = new boolean[(int) totalTagCount];
+
+        for (RatingTag rt : rating.getRatingTags()) {
+            int tagKey = rt.getTag().getTagKey();
+            if (tagKey >= 1 && tagKey <= totalTagCount) {
+                bits[tagKey - 1] = true;
+            }
+        }
+
+        StringBuilder tagKeyBuilder = new StringBuilder();
+        for (boolean bit : bits) {
+            tagKeyBuilder.append(bit ? '1' : '0');
+        }
+
+        RatingExistResponseDto ratingExistResponseDto = new RatingExistResponseDto();
+        ratingExistResponseDto.setRatingExist(true);
+        ratingExistResponseDto.setScore(rating.getScore());
+        ratingExistResponseDto.setComment(rating.getComment());
+        ratingExistResponseDto.setNameEng(boardgame.getNameEng());
+        ratingExistResponseDto.setNameKor(boardgame.getNameKor());
+        ratingExistResponseDto.setImageUrl(boardgame.getImageUrl());
+        ratingExistResponseDto.setTagKey(tagKeyBuilder.toString()); // 비트마스킹 문자열로 설정
+
+        return ratingExistResponseDto;
     }
+
 
     public void addRatingReq(String userId, Integer boardgamekey) {
 
@@ -277,4 +337,29 @@ public class RatingService {
     }
 
 
+    public Object getTaggedGames(Integer tagKey) {
+//        if(tagKey == null) {
+//            throw new AppException("태그 키가 누락되었습니다.", HttpStatus.BAD_REQUEST);
+//        }
+//
+//        List<Boardgame> boardgames = boardgameRepository.findByTagKey(tagKey);
+//        if(boardgames.isEmpty()) {
+//            throw new AppException("해당 태그가 적용된 보드게임이 없습니다.", HttpStatus.NOT_FOUND);
+//        }
+//
+//        List<TaggedGameResponseDto> responseDtos = new ArrayList<>();
+//        for(Boardgame boardgame : boardgames) {
+//
+//            TaggedGameResponseDto responseDto = TaggedGameResponseDto.builder()
+//                    .boardgameKey(boardgame.getBoardgameKey())
+//                    .nameEng(boardgame.getNameEng())
+//                    .nameKor(boardgame.getNameKor())
+//                    .likes(likeRepository.countLikeByBoardgame(boardgame))
+//                    .castScore(boardgame.getCastScore())
+//                    .build();
+//            responseDto.setTagCount(1);
+//            responseDtos.add(responseDto);
+//        }
+        return null;
+    }
 }

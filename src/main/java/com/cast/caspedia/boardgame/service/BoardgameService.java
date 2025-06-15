@@ -9,6 +9,7 @@ import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.boardgame.util.KoreanMatcher;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
+import com.cast.caspedia.rating.domain.RatingTag;
 import com.cast.caspedia.rating.dto.TagCountsResponseDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingTagRepository;
@@ -24,7 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -195,28 +198,35 @@ public class BoardgameService {
             throw new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        List<Rating> ratings = ratingRepository.findAllRatingByBoardgame(boardgame);
+        // 각 태그별 리뷰 수 조회 (tagKey, count)
+        List<Object[]> tagCountsRaw = ratingTagRepository.countTagsByBoardgame(boardgameKey);
 
+        // 전체 태그 수 조회 → 누락 태그에 대한 count = 0 처리
+        long totalTagCount = tagRepository.count();
 
+        // Map 으로 변환
+        Map<Integer, Integer> tagCountMap = new HashMap<>();
+        for (Object[] row : tagCountsRaw) {
+            Integer tagKey = (Integer) row[0];
+            Long count = (Long) row[1];
+            tagCountMap.put(tagKey, count.intValue());
+        }
+
+        // 전체 태그에 대해 응답 생성 (없는 태그는 count = 0)
         List<TagCountsResponseDto> result = new ArrayList<>();
-        for(int i = 1; i <= 24; i++) {
-            result.add(new TagCountsResponseDto(i, 0));
+        for (int i = 1; i <= totalTagCount; i++) {
+            int count = tagCountMap.getOrDefault(i, 0);
+            result.add(new TagCountsResponseDto(i, count));
         }
 
-        for(Rating rating : ratings) {
-            String tagKey = rating.getTagKey();
-            for(int i = 0; i < tagKey.length(); i++) {
-                if(tagKey.charAt(i) == '1') {
-                    result.get(i).setCount(result.get(i).getCount() + 1);
-                }
-            }
-        }
         return result;
     }
 
     public List<RatingListResponseDto> getRatingList(int boardgameKey) {
         Boardgame boardgame = boardgameRepository.findById(boardgameKey).orElseThrow(() -> new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
         List<Rating> ratings = ratingRepository.findAllRatingByBoardgame(boardgame);
+
+        long totalTagCount = tagRepository.count();
 
         List<RatingListResponseDto> result = new ArrayList<>();
 
@@ -229,7 +239,24 @@ public class BoardgameService {
             dto.setScore(rating.getScore());
             dto.setCreatedAt(rating.getCreatedAt().toString());
             dto.setUpdatedAt(rating.getUpdatedAt().toString());
-            dto.setTagKeys(rating.getTagKey());
+
+            // rating_tag 기반으로 비트마스킹 문자열 생성
+            boolean[] bits = new boolean[(int) totalTagCount]; // 0으로 초기화
+
+            for (RatingTag rt : rating.getRatingTags()) {
+                int tagKey = rt.getTag().getTagKey();
+                if (tagKey >= 1 && tagKey <= totalTagCount) {
+                    bits[tagKey - 1] = true;
+                }
+            }
+
+            // boolean[] → String (예: 010010...)
+            StringBuilder tagKeyBuilder = new StringBuilder();
+            for (boolean bit : bits) {
+                tagKeyBuilder.append(bit ? '1' : '0');
+            }
+
+            dto.setTagKeys(tagKeyBuilder.toString());
             result.add(dto);
         }
         return result;

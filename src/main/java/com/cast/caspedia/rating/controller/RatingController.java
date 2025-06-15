@@ -191,4 +191,13 @@ public class RatingController {
         return ResponseEntity.ok(ratingService.getTopCount(100, period));
     }
 
+    //특정 태그가 있는 게임 목록
+    @GetMapping("/tagged/{tagKey}")
+    public ResponseEntity<?> getTaggedGames( @PathVariable Integer tagKey) {
+        if(tagKey == null) {
+            throw new AppException("태그 키가 누락되었습니다.", HttpStatus.BAD_REQUEST);
+        }
+        return ResponseEntity.ok(ratingService.getTaggedGames(tagKey));
+    }
+
 }

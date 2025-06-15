@@ -20,4 +20,13 @@ public interface RatingTagRepository extends JpaRepository<RatingTag, Integer> {
     @Query("SELECT rt.tag FROM RatingTag rt WHERE rt.rating = :rating")
     List<Tag> findTagByRating(@Param("rating") Rating rating);
 
+    @Query("""
+        SELECT rt.tag.tagKey, COUNT(rt.ratingTagKey)
+        FROM RatingTag rt
+        JOIN rt.rating r
+        WHERE r.boardgame.boardgameKey = :boardgameKey
+        GROUP BY rt.tag.tagKey
+        ORDER BY rt.tag.tagKey
+    """)
+    List<Object[]> countTagsByBoardgame(@Param("boardgameKey") int boardgameKey);
 }

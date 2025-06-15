@@ -1,37 +1,31 @@
 package com.cast.caspedia.rating.domain;
 
+import com.cast.caspedia.user.domain.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "rating_tag")
+@Table(name = "reply")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class RatingTag {
-
+public class Reply {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "rating_tag_key")
-    private Integer ratingTagKey;
+    @Column(name = "reply_key")
+    private Integer replyKey;
 
     @ManyToOne
     @JoinColumn(name = "rating_key", nullable = false)
     private Rating rating;
 
     @ManyToOne
-    @JoinColumn(name = "tag_key", nullable = false)
-    private Tag tag;
+    @JoinColumn(name = "user_key", nullable = false)
+    private User user;
+
+    @Column(name = "content", length = 300, nullable = false)
+    private String content;
 
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", insertable = false, updatable = false)
-    private LocalDateTime updatedAt;
 }

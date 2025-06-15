@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "rating")
@@ -40,5 +41,9 @@ public class Rating {
 
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "rating", fetch = FetchType.LAZY)
+    private List<RatingTag> ratingTags;
+
 }
 

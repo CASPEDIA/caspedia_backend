@@ -3,9 +3,11 @@ package com.cast.caspedia.user.service;
 import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
+import com.cast.caspedia.rating.domain.RatingTag;
 import com.cast.caspedia.rating.dto.RatingDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingTagRepository;
+import com.cast.caspedia.rating.repository.TagRepository;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.domain.UserImage;
 import com.cast.caspedia.user.dto.LikeDto;
@@ -48,6 +50,9 @@ public class UserService {
 
     @Autowired
     private LikeRepository likeRepository;
+
+    @Autowired
+    private TagRepository tagRepository;
 
 
 
@@ -139,38 +144,49 @@ public class UserService {
     // 특정 유저의 평가 내역 목록 조회
     public List<RatingDto> getRatingList(String nanoid) throws AppException {
         User user = userRepository.findByNanoid(nanoid);
-
         if (user == null) {
             throw new AppException("해당 유저가 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        List<Rating> ratings = new ArrayList<>();
-        ratings = ratingRepository.findRatingByUser(user);
-
+        List<Rating> ratings = ratingRepository.findRatingByUser(user);
         List<RatingDto> ratingDtos = new ArrayList<>();
 
-        if(ratings != null) {
-            for (Rating rating : ratings) {
-                RatingDto ratingDto = new RatingDto();
-                ratingDto.setRatingKey(rating.getRatingKey());
-                ratingDto.setScore(rating.getScore());
-                ratingDto.setComment(rating.getComment());
-                ratingDto.setBoardgameKey(rating.getBoardgame().getBoardgameKey());
-                ratingDto.setNanoid(rating.getUser().getNanoid());
-                ratingDto.setNameKor(rating.getBoardgame().getNameKor());
-                ratingDto.setNameEng(rating.getBoardgame().getNameEng());
-                ratingDto.setCreatedAt(rating.getCreatedAt());
-                ratingDto.setUpdatedAt(rating.getUpdatedAt());
-                ratingDto.setTagKey(rating.getTagKey());
-                ratingDto.setImageUrl(rating.getBoardgame().getImageUrl());
-                ratingDtos.add(ratingDto);
+        long totalTagCount = tagRepository.count(); // 전체 태그 수
+
+        for (Rating rating : ratings) {
+            RatingDto dto = new RatingDto();
+            dto.setRatingKey(rating.getRatingKey());
+            dto.setScore(rating.getScore());
+            dto.setComment(rating.getComment());
+            dto.setBoardgameKey(rating.getBoardgame().getBoardgameKey());
+            dto.setNanoid(rating.getUser().getNanoid());
+            dto.setNameKor(rating.getBoardgame().getNameKor());
+            dto.setNameEng(rating.getBoardgame().getNameEng());
+            dto.setCreatedAt(rating.getCreatedAt());
+            dto.setUpdatedAt(rating.getUpdatedAt());
+            dto.setImageUrl(rating.getBoardgame().getImageUrl());
+
+            // 비트마스크 변환
+            boolean[] bits = new boolean[(int) totalTagCount];
+            for (RatingTag rt : rating.getRatingTags()) {
+                int tagKey = rt.getTag().getTagKey();
+                if (tagKey >= 1 && tagKey <= totalTagCount) {
+                    bits[tagKey - 1] = true;
+                }
             }
+
+            StringBuilder bitmask = new StringBuilder();
+            for (boolean bit : bits) {
+                bitmask.append(bit ? '1' : '0');
+            }
+
+            dto.setTagKey(bitmask.toString());
+            ratingDtos.add(dto);
         }
-
-
 
         return ratingDtos;
     }
+
 
     // 유저 프로필 사진 변경
     @Transactional
