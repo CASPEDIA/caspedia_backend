@@ -24,6 +24,6 @@ public class RatingReq {
     @JoinColumn(name = "user_key", nullable = false)
     private User user;
 
-    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    @Column(name = "created_at", nullable = true)
     private LocalDateTime createdAt;
 }

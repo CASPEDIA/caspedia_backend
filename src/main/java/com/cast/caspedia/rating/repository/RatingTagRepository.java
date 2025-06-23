@@ -29,4 +29,17 @@ public interface RatingTagRepository extends JpaRepository<RatingTag, Integer> {
         ORDER BY rt.tag.tagKey
     """)
     List<Object[]> countTagsByBoardgame(@Param("boardgameKey") int boardgameKey);
+
+    void deleteAllByRating(Rating rating);
+
+    @Query("""
+        SELECT b, COUNT(rt)
+        FROM RatingTag rt
+            JOIN rt.rating r
+            JOIN r.boardgame b
+        WHERE rt.tag = :tag
+        GROUP BY b.boardgameKey
+        ORDER BY COUNT(rt) DESC
+    """)
+    List<Object[]> findBoardgameAndTagCountByTag(@Param("tag") Tag tag);
 }

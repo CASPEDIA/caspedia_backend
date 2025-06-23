@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TaggedGameResponseDto {
     private Integer boardgameKey;
+    private String imageUrl;
     private String nameKor;
     private String nameEng;
     private int likes;

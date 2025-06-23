@@ -29,9 +29,21 @@ public class RatingTag {
     @JoinColumn(name = "tag_key", nullable = false)
     private Tag tag;
 
-    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    //자동으로 들어가게
+    @Column(name = "created_at", nullable = true)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = true)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

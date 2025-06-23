@@ -26,6 +26,6 @@ public class Reply {
     @Column(name = "content", length = 300, nullable = false)
     private String content;
 
-    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    @Column(name = "created_at", nullable = true)
     private LocalDateTime createdAt;
 }

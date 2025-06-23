@@ -49,7 +49,7 @@ public class RatingController {
             }
 
             int tagCnt = 0;
-            if(ratingRequestDto.getTags().length() != 24) {
+            if(ratingRequestDto.getTags().length() != 28) {
                 throw new AppException("태그 정보가 잘못되었습니다.", HttpStatus.BAD_REQUEST);
             }
             for(int i = 0; i < ratingRequestDto.getTags().length(); i++) {
@@ -89,7 +89,7 @@ public class RatingController {
             ratingRequestDto.setTags((String)param.get("tag_key"));
 
             int tagCnt = 0;
-            if(ratingRequestDto.getTags().length() != 24) {
+            if(ratingRequestDto.getTags().length() != 28) {
                 throw new AppException("태그 정보가 잘못되었습니다.", HttpStatus.BAD_REQUEST);
             }
             for(int i = 0; i < ratingRequestDto.getTags().length(); i++) {
@@ -193,11 +193,15 @@ public class RatingController {
 
     //특정 태그가 있는 게임 목록
     @GetMapping("/tagged/{tagKey}")
-    public ResponseEntity<?> getTaggedGames( @PathVariable Integer tagKey) {
+    public ResponseEntity<?> getTaggedGames( @PathVariable String tagKey) {
         if(tagKey == null) {
             throw new AppException("태그 키가 누락되었습니다.", HttpStatus.BAD_REQUEST);
         }
-        return ResponseEntity.ok(ratingService.getTaggedGames(tagKey));
+        try {
+            return ResponseEntity.ok(ratingService.getTaggedGames(Integer.parseInt(tagKey)));
+        } catch (NumberFormatException e) {
+            throw new AppException("태그 키는 숫자여야 합니다.", HttpStatus.BAD_REQUEST);
+        }
     }
 
 }

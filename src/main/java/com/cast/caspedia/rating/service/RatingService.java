@@ -7,6 +7,7 @@ import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.rating.domain.RatingReq;
 import com.cast.caspedia.rating.domain.RatingTag;
+import com.cast.caspedia.rating.domain.Tag;
 import com.cast.caspedia.rating.dto.*;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingReqRepository;
@@ -124,6 +125,9 @@ public class RatingService {
         rating.setTagKey(ratingRequestDto.getTags());
         String tagKeyBitmasking = ratingRequestDto.getTags();
 
+        // 기존 RatingTag 삭제
+        ratingTagRepository.deleteAllByRating(rating);
+
         // rating 업데이트
         Rating savedRating = ratingRepository.save(rating);
         // RatingTag 생성 및 저장
@@ -155,6 +159,9 @@ public class RatingService {
         // Rating 엔티티 가져오기
         Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgameKey);
         Boardgame boardgame = rating.getBoardgame();
+
+        // RatingTag 삭제
+        ratingTagRepository.deleteByRating(rating);
 
         //rating 삭제
         ratingRepository.delete(rating);
@@ -338,28 +345,34 @@ public class RatingService {
 
 
     public Object getTaggedGames(Integer tagKey) {
-//        if(tagKey == null) {
-//            throw new AppException("태그 키가 누락되었습니다.", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        List<Boardgame> boardgames = boardgameRepository.findByTagKey(tagKey);
-//        if(boardgames.isEmpty()) {
-//            throw new AppException("해당 태그가 적용된 보드게임이 없습니다.", HttpStatus.NOT_FOUND);
-//        }
-//
-//        List<TaggedGameResponseDto> responseDtos = new ArrayList<>();
-//        for(Boardgame boardgame : boardgames) {
-//
-//            TaggedGameResponseDto responseDto = TaggedGameResponseDto.builder()
-//                    .boardgameKey(boardgame.getBoardgameKey())
-//                    .nameEng(boardgame.getNameEng())
-//                    .nameKor(boardgame.getNameKor())
-//                    .likes(likeRepository.countLikeByBoardgame(boardgame))
-//                    .castScore(boardgame.getCastScore())
-//                    .build();
-//            responseDto.setTagCount(1);
-//            responseDtos.add(responseDto);
-//        }
-        return null;
+        if(tagKey == null) {
+            throw new AppException("태그 키가 누락되었습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        Tag tag = tagRepository.findById(tagKey)
+                .orElseThrow(() -> new AppException("해당 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        List<Object[]> boardgames = ratingTagRepository.findBoardgameAndTagCountByTag(tag);
+        if(boardgames.isEmpty()) {
+            throw new AppException("해당 태그가 적용된 보드게임이 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        List<TaggedGameResponseDto> responseDtos = new ArrayList<>();
+        for(Object[] result : boardgames) {
+            Boardgame boardgame = (Boardgame) result[0];
+            Long count = (Long) result[1];
+            int tagCount = count != null ? count.intValue() : 0;
+            TaggedGameResponseDto responseDto = TaggedGameResponseDto.builder()
+                    .boardgameKey(boardgame.getBoardgameKey())
+                    .nameEng(boardgame.getNameEng())
+                    .nameKor(boardgame.getNameKor())
+                    .likes(likeRepository.countLikeByBoardgame(boardgame))
+                    .castScore(boardgame.getCastScore())
+                    .imageUrl(boardgame.getImageUrl())
+                    .tagCount(tagCount)
+                    .build();
+            responseDtos.add(responseDto);
+        }
+        return responseDtos;
     }
 }
