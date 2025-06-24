@@ -4,15 +4,10 @@ import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
 import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
-import com.cast.caspedia.rating.domain.Rating;
-import com.cast.caspedia.rating.domain.RatingReq;
-import com.cast.caspedia.rating.domain.RatingTag;
-import com.cast.caspedia.rating.domain.Tag;
+import com.cast.caspedia.rating.domain.*;
 import com.cast.caspedia.rating.dto.*;
-import com.cast.caspedia.rating.repository.RatingRepository;
-import com.cast.caspedia.rating.repository.RatingReqRepository;
-import com.cast.caspedia.rating.repository.RatingTagRepository;
-import com.cast.caspedia.rating.repository.TagRepository;
+import com.cast.caspedia.rating.repository.*;
+import com.cast.caspedia.rating.util.TagBitmaskUtil;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -32,17 +27,24 @@ public class RatingService {
 
     private final RatingTagRepository ratingTagRepository;
     private final TagRepository tagRepository;
-    UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    RatingRepository ratingRepository;
+    private final RatingRepository ratingRepository;
 
-    BoardgameRepository boardgameRepository;
+    private final BoardgameRepository boardgameRepository;
 
-    RatingReqRepository ratingReqRepository;
+    private final RatingReqRepository ratingReqRepository;
 
-    LikeRepository likeRepository;
+    private final LikeRepository likeRepository;
 
-    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository) {
+    private final RatingImpressedRepository ratingImpressedRepository;
+
+    private final ReplyImpressedRepository replyImpressedRepository;
+    private final ReplyRepository replyRepository;
+
+    private final TagBitmaskUtil tagBitmaskUtil;
+
+    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingImpressedRepository ratingImpressedRepository, ReplyImpressedRepository replyImpressedRepository, ReplyRepository replyRepository, TagBitmaskUtil tagBitmaskUtil) {
         this.userRepository = userRepository;
         this.ratingRepository = ratingRepository;
         this.boardgameRepository = boardgameRepository;
@@ -50,6 +52,10 @@ public class RatingService {
         this.likeRepository = likeRepository;
         this.ratingTagRepository = ratingTagRepository;
         this.tagRepository = tagRepository;
+        this.ratingImpressedRepository = ratingImpressedRepository;
+        this.replyImpressedRepository = replyImpressedRepository;
+        this.replyRepository = replyRepository;
+        this.tagBitmaskUtil = tagBitmaskUtil;
     }
 
     @Transactional
@@ -166,6 +172,21 @@ public class RatingService {
         //rating 삭제
         ratingRepository.delete(rating);
 
+        // 댓글 목록 조회
+        List<Reply> replies = replyRepository.findAllByRating(rating);
+
+        // 댓글에 대한 공감 삭제
+        for (Reply reply : replies) {
+            // 댓글에 대한 공감 삭제
+            replyImpressedRepository.deleteAllByReply(reply);
+        }
+
+        // 댓글 삭제
+        replyRepository.deleteAll(replies);
+
+        // 평가에 대한 공감 삭제
+        ratingImpressedRepository.deleteAllByRating(rating);
+
         // boardgame 엔티티에 평점 업데이트
         boardgame.setCastScore(calculateRating(boardgameKey));
         // boardgame 테이블에 저장
@@ -201,22 +222,6 @@ public class RatingService {
         // 평가가 있는 경우
         Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgameKey);
 
-        // 태그 비트마스크 생성
-        long totalTagCount = tagRepository.count(); // 전체 태그 수
-        boolean[] bits = new boolean[(int) totalTagCount];
-
-        for (RatingTag rt : rating.getRatingTags()) {
-            int tagKey = rt.getTag().getTagKey();
-            if (tagKey >= 1 && tagKey <= totalTagCount) {
-                bits[tagKey - 1] = true;
-            }
-        }
-
-        StringBuilder tagKeyBuilder = new StringBuilder();
-        for (boolean bit : bits) {
-            tagKeyBuilder.append(bit ? '1' : '0');
-        }
-
         RatingExistResponseDto ratingExistResponseDto = new RatingExistResponseDto();
         ratingExistResponseDto.setRatingExist(true);
         ratingExistResponseDto.setScore(rating.getScore());
@@ -224,7 +229,8 @@ public class RatingService {
         ratingExistResponseDto.setNameEng(boardgame.getNameEng());
         ratingExistResponseDto.setNameKor(boardgame.getNameKor());
         ratingExistResponseDto.setImageUrl(boardgame.getImageUrl());
-        ratingExistResponseDto.setTagKey(tagKeyBuilder.toString()); // 비트마스킹 문자열로 설정
+        ratingExistResponseDto.setTagKey(tagBitmaskUtil.getTagBitmask(rating)); // 비트마스킹 문자열로 설정
+        ratingExistResponseDto.setReplyCount(replyRepository.countByRating(rating)); // 평가에 대한 댓글 수
 
         return ratingExistResponseDto;
     }
@@ -374,5 +380,186 @@ public class RatingService {
             responseDtos.add(responseDto);
         }
         return responseDtos;
+    }
+
+    // 평가에 공감 추가
+    public void addRatingImpressed(String userId, Integer ratingKey) {
+        Rating rating = ratingRepository.findById(ratingKey)
+                .orElseThrow(() -> new AppException("해당 평가를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        User user = userRepository.findUserByUserId(userId);
+        if(user == null) {
+            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        // 공감이 없을때만 추가
+        if(!ratingImpressedRepository.existsByUserAndRating(user, rating)) {
+            RatingImpressed ratingImpressed = new RatingImpressed();
+            ratingImpressed.setUser(user);
+            ratingImpressed.setRating(rating);
+            ratingImpressedRepository.save(ratingImpressed);
+        } else {
+            throw new AppException("이미 공감한 평가입니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // 평가에 공감 삭제
+    public void deleteRatingImpressed(String userId, Integer ratingKey) {
+        Rating rating = ratingRepository.findById(ratingKey)
+                .orElseThrow(() -> new AppException("해당 평가를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        User user = userRepository.findUserByUserId(userId);
+        if(user == null) {
+            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        // 공감이 있을때, 유저가 공감한 평가인지 확인 후 삭제
+        RatingImpressed ratingImpressed = ratingImpressedRepository.findByUserAndRating(user, rating)
+                .orElseThrow(() -> new AppException("공감한 평가가 없습니다.", HttpStatus.NOT_FOUND));
+
+        if(!ratingImpressed.getUser().getId().equals(user.getId())) {
+            throw new AppException("공감한 평가가 아닙니다.", HttpStatus.FORBIDDEN);
+        } else {
+            // 공감 삭제
+            ratingImpressedRepository.delete(ratingImpressed);
+        }
+    }
+
+    // 평가에 댓글 추가
+    public void addRatingReply(String userId, Integer ratingKey, String content) {
+        Rating rating = ratingRepository.findById(ratingKey)
+                .orElseThrow(() -> new AppException("해당 평가를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        User user = userRepository.findUserByUserId(userId);
+        if(user == null) {
+            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        Reply reply = new Reply();
+        reply.setContent(content);
+        reply.setRating(rating);
+        reply.setUser(user);
+        replyRepository.save(reply);
+    }
+
+    // 평가 댓글 삭제
+    @Transactional
+    public void deleteRatingReply(String userId, Integer replyKey) {
+        Reply reply = replyRepository.findById(replyKey)
+                .orElseThrow(() -> new AppException("해당 댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        User user = userRepository.findUserByUserId(userId);
+        if(user == null) {
+            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        // 댓글 작성자와 요청한 사용자가 일치하는지 확인
+        if(!reply.getUser().getId().equals(user.getId())) {
+            throw new AppException("댓글 작성자만 삭제할 수 있습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        // 댓글에 대한 공감 삭제
+        replyImpressedRepository.deleteAllByReply(reply);
+
+        // 댓글 삭제
+        replyRepository.delete(reply);
+    }
+
+    // 댓글에 공감 추가
+    public void addReplyImpressed(String userId, Integer replyKey) {
+        Reply reply = replyRepository.findById(replyKey)
+                .orElseThrow(() -> new AppException("해당 댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        User user = userRepository.findUserByUserId(userId);
+        if(user == null) {
+            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        // 공감이 없을때만 추가
+        if(!replyImpressedRepository.existsByUserAndReply(user, reply)) {
+            ReplyImpressed replyImpressed = new ReplyImpressed();
+            replyImpressed.setUser(user);
+            replyImpressed.setReply(reply);
+            replyImpressedRepository.save(replyImpressed);
+        } else {
+            throw new AppException("이미 공감한 댓글입니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // 댓글에 공감 삭제
+    public void deleteReplyImpressed(String userId, Integer replyKey) {
+        Reply reply = replyRepository.findById(replyKey)
+                .orElseThrow(() -> new AppException("해당 댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        User user = userRepository.findUserByUserId(userId);
+        if(user == null) {
+            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        // 공감이 있을때, 유저가 공감한 댓글인지 확인 후 삭제
+        ReplyImpressed replyImpressed = replyImpressedRepository.findByUserAndReply(user, reply)
+                .orElseThrow(() -> new AppException("공감한 댓글이 없습니다.", HttpStatus.NOT_FOUND));
+
+        if(!replyImpressed.getUser().getId().equals(user.getId())) {
+            throw new AppException("공감한 댓글이 아닙니다.", HttpStatus.FORBIDDEN);
+        } else {
+            // 공감 삭제
+            replyImpressedRepository.delete(replyImpressed);
+        }
+    }
+
+    public RatingDetailResponseDto getRatingDetail(String userId, Integer ratingKey) {
+        User user = userRepository.findUserByUserId(userId);
+        if(user == null) {
+            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        Rating rating = ratingRepository.findById(ratingKey)
+                .orElseThrow(() -> new AppException("해당 평가를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        Boardgame boardgame = rating.getBoardgame();
+        RatingDetailResponseDto.GameInfoDto gameInfo = RatingDetailResponseDto.GameInfoDto.builder()
+                .boardgameKey(boardgame.getBoardgameKey())
+                .imageUrl(boardgame.getImageUrl())
+                .nameKor(boardgame.getNameKor())
+                .nameEng(boardgame.getNameEng())
+                .yearPublished(boardgame.getYearPublished())
+                .castScore(boardgame.getCastScore())
+                .build();
+
+        RatingDetailResponseDto.RatingInfoDto ratingInfo = RatingDetailResponseDto.RatingInfoDto.builder()
+                .nanoid(user.getNanoid())
+                .nickname(user.getNickname())
+                .userImageKey(user.getUserImage().getUserImageKey())
+                .comment(rating.getComment())
+                .score(rating.getScore())
+                .createdAt(rating.getCreatedAt().toString())
+                .updatedAt(rating.getUpdatedAt().toString())
+                .tagKeys(tagBitmaskUtil.getTagBitmask(rating)) // 비트마스킹 문자열로 설정
+                .impressedCount(ratingImpressedRepository.countByRating(rating))
+                .replyCount(replyRepository.countByRating(rating))
+                .build();
+
+        List<Reply> replyInfoList = replyRepository.findAllByRating(rating);
+
+        List<RatingDetailResponseDto.ReplyInfoDto> replyInfoDtos = new ArrayList<>();
+
+        for (Reply reply : replyInfoList) {
+            RatingDetailResponseDto.ReplyInfoDto replyInfo = RatingDetailResponseDto.ReplyInfoDto.builder()
+                    .replyKey(reply.getReplyKey())
+                    .nanoid(reply.getUser().getNanoid())
+                    .nickname(reply.getUser().getNickname())
+                    .userImageKey(reply.getUser().getUserImage().getUserImageKey())
+                    .impressedCount(replyImpressedRepository.countByReply(reply))
+                    .content(reply.getContent())
+                    .build();
+            replyInfoDtos.add(replyInfo);
+        }
+
+        return RatingDetailResponseDto.builder()
+                .gameInfo(gameInfo)
+                .ratingInfo(ratingInfo)
+                .replyInfo(replyInfoDtos.toArray(new RatingDetailResponseDto.ReplyInfoDto[0]))
+                .build();
     }
 }

@@ -126,6 +126,7 @@ public class RatingController {
         return ResponseEntity.ok().build();
     }
 
+    // 보드게임 평가정보 요청 api
     @GetMapping("/{boardgamekey}")
     public ResponseEntity<?> getRating(@PathVariable Integer boardgamekey) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -193,14 +194,110 @@ public class RatingController {
 
     //특정 태그가 있는 게임 목록
     @GetMapping("/tagged/{tagKey}")
-    public ResponseEntity<?> getTaggedGames( @PathVariable String tagKey) {
+    public ResponseEntity<?> getTaggedGames( @PathVariable Integer tagKey) {
         if(tagKey == null) {
             throw new AppException("태그 키가 누락되었습니다.", HttpStatus.BAD_REQUEST);
         }
         try {
-            return ResponseEntity.ok(ratingService.getTaggedGames(Integer.parseInt(tagKey)));
+            return ResponseEntity.ok(ratingService.getTaggedGames(tagKey));
         } catch (NumberFormatException e) {
             throw new AppException("태그 키는 숫자여야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    //평가에 공감 추가
+    @PostMapping("/impressed/{ratingKey}")
+    public ResponseEntity<?> addRatingImpressed(@PathVariable Integer ratingKey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        ratingService.addRatingImpressed(userId, ratingKey);
+        return ResponseEntity.ok().build();
+    }
+
+
+    //평가에 공감 삭제
+    @DeleteMapping("/impressed/{ratingKey}")
+    public ResponseEntity<?> deleteRatingImpressed(@PathVariable Integer ratingKey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        ratingService.deleteRatingImpressed(userId, ratingKey);
+        return ResponseEntity.ok().build();
+    }
+
+    //댓글 입력
+    @PostMapping("/reply/{ratingKey}")
+    public ResponseEntity<?> addRatingReply(@RequestBody Map<String, Object> param, @PathVariable Integer ratingKey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        if(param.containsKey("content")) {
+            String content = (String) param.get("content");
+            if(content.length() > 300) {
+                throw new AppException("댓글은 300자 이하여야 합니다.", HttpStatus.BAD_REQUEST);
+            }
+            ratingService.addRatingReply(userId, ratingKey, content);
+            return ResponseEntity.ok().build();
+        } else {
+            throw new AppException("댓글 내용이 누락되었습니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+    //댓글 삭제
+    @DeleteMapping("/reply/{replyKey}")
+    public ResponseEntity<?> deleteRatingReply(@PathVariable Integer replyKey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        ratingService.deleteRatingReply(userId, replyKey);
+        return ResponseEntity.ok().build();
+    }
+
+    //댓글에 공감 추가
+    @PostMapping("/reply/impressed/{replyKey}")
+    public ResponseEntity<?> addReplyImpressed(@PathVariable Integer replyKey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        ratingService.addReplyImpressed(userId, replyKey);
+        return ResponseEntity.ok().build();
+    }
+
+    //댓글에 공감 삭제
+    @DeleteMapping("/reply/impressed/{replyKey}")
+    public ResponseEntity<?> deleteReplyImpressed(@PathVariable Integer replyKey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        ratingService.deleteReplyImpressed(userId, replyKey);
+        return ResponseEntity.ok().build();
+    }
+
+    //평가 상세 정보 출력
+    @GetMapping("/detail/{ratingKey}")
+    public ResponseEntity<?> getRatingDetail(@PathVariable Integer ratingKey) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        if(userId == null) {
+            throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        try {
+            return ResponseEntity.ok(ratingService.getRatingDetail(userId, ratingKey));
+        } catch (Exception e) {
+            throw new AppException("평가 상세 정보를 가져오는데 실패하였습니다.", HttpStatus.BAD_REQUEST);
         }
     }
 

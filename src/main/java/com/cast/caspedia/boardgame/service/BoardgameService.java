@@ -9,11 +9,11 @@ import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.boardgame.util.KoreanMatcher;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
-import com.cast.caspedia.rating.domain.RatingTag;
 import com.cast.caspedia.rating.dto.TagCountsResponseDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingTagRepository;
 import com.cast.caspedia.rating.repository.TagRepository;
+import com.cast.caspedia.rating.util.TagBitmaskUtil;
 import com.cast.caspedia.user.domain.Like;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.repository.UserRepository;
@@ -33,25 +33,27 @@ import java.util.Map;
 @Slf4j
 public class BoardgameService {
 
-    BoardgameRepository boardgameRepository;
+    private final BoardgameRepository boardgameRepository;
 
-    LikeRepository likeRepository;
+    private final LikeRepository likeRepository;
 
-    UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    RatingTagRepository ratingTagRepository;
+    private final RatingTagRepository ratingTagRepository;
 
-    TagRepository tagRepository;
+    private final TagRepository tagRepository;
 
-    RatingRepository ratingRepository;
+    private final RatingRepository ratingRepository;
 
-    KoreanMatcher koreanMatcher;
+    private final KoreanMatcher koreanMatcher;
 
-    BoardgameMechanicRepository boardgameMechanicRepository;
+    private final BoardgameMechanicRepository boardgameMechanicRepository;
 
-    BoardgameCategoryRepository boardgameCategoryRepository;
+    private final BoardgameCategoryRepository boardgameCategoryRepository;
 
-    public BoardgameService(BoardgameMechanicRepository boardgameMechanicRepository, BoardgameCategoryRepository boardgameCategoryRepository, BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingRepository ratingRepository) {
+    private final TagBitmaskUtil tagBitmaskUtil;
+
+    public BoardgameService(BoardgameMechanicRepository boardgameMechanicRepository, BoardgameCategoryRepository boardgameCategoryRepository, BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingRepository ratingRepository, TagBitmaskUtil tagBitmaskUtil) {
         this.boardgameRepository = boardgameRepository;
         this.koreanMatcher = koreanMatcher;
         this.likeRepository = likeRepository;
@@ -61,6 +63,7 @@ public class BoardgameService {
         this.ratingRepository = ratingRepository;
         this.boardgameMechanicRepository = boardgameMechanicRepository;
         this.boardgameCategoryRepository = boardgameCategoryRepository;
+        this.tagBitmaskUtil = tagBitmaskUtil;
     }
 
     public List<BoardgameAutoFillDto> autofill(String query) {
@@ -240,23 +243,7 @@ public class BoardgameService {
             dto.setCreatedAt(rating.getCreatedAt().toString());
             dto.setUpdatedAt(rating.getUpdatedAt().toString());
 
-            // rating_tag 기반으로 비트마스킹 문자열 생성
-            boolean[] bits = new boolean[(int) totalTagCount]; // 0으로 초기화
-
-            for (RatingTag rt : rating.getRatingTags()) {
-                int tagKey = rt.getTag().getTagKey();
-                if (tagKey >= 1 && tagKey <= totalTagCount) {
-                    bits[tagKey - 1] = true;
-                }
-            }
-
-            // boolean[] → String (예: 010010...)
-            StringBuilder tagKeyBuilder = new StringBuilder();
-            for (boolean bit : bits) {
-                tagKeyBuilder.append(bit ? '1' : '0');
-            }
-
-            dto.setTagKeys(tagKeyBuilder.toString());
+            dto.setTagKeys(tagBitmaskUtil.getTagBitmask(rating));
             result.add(dto);
         }
         return result;

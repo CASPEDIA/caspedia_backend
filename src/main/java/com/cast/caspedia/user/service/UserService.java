@@ -3,11 +3,11 @@ package com.cast.caspedia.user.service;
 import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
-import com.cast.caspedia.rating.domain.RatingTag;
 import com.cast.caspedia.rating.dto.RatingDto;
 import com.cast.caspedia.rating.repository.RatingRepository;
 import com.cast.caspedia.rating.repository.RatingTagRepository;
 import com.cast.caspedia.rating.repository.TagRepository;
+import com.cast.caspedia.rating.util.TagBitmaskUtil;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.domain.UserImage;
 import com.cast.caspedia.user.dto.LikeDto;
@@ -53,7 +53,8 @@ public class UserService {
 
     @Autowired
     private TagRepository tagRepository;
-
+    @Autowired
+    private TagBitmaskUtil tagBitmaskUtil;
 
 
     // 유저 검색 자동완성 기능
@@ -166,21 +167,7 @@ public class UserService {
             dto.setUpdatedAt(rating.getUpdatedAt());
             dto.setImageUrl(rating.getBoardgame().getImageUrl());
 
-            // 비트마스크 변환
-            boolean[] bits = new boolean[(int) totalTagCount];
-            for (RatingTag rt : rating.getRatingTags()) {
-                int tagKey = rt.getTag().getTagKey();
-                if (tagKey >= 1 && tagKey <= totalTagCount) {
-                    bits[tagKey - 1] = true;
-                }
-            }
-
-            StringBuilder bitmask = new StringBuilder();
-            for (boolean bit : bits) {
-                bitmask.append(bit ? '1' : '0');
-            }
-
-            dto.setTagKey(bitmask.toString());
+            dto.setTagKey(tagBitmaskUtil.getTagBitmask(rating)); // 태그 비트마스크 설정
             ratingDtos.add(dto);
         }
 

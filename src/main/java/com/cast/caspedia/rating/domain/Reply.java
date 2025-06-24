@@ -28,4 +28,9 @@ public class Reply {
 
     @Column(name = "created_at", nullable = true)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

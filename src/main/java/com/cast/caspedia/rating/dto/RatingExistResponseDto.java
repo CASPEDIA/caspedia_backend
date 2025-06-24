@@ -11,4 +11,5 @@ public class RatingExistResponseDto {
     private String nameKor;
     private String tagKey;
     private String imageUrl;
+    private int replyCount;
 }
