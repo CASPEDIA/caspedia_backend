@@ -4,9 +4,7 @@ import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.rating.dto.RatingDto;
-import com.cast.caspedia.rating.repository.RatingRepository;
-import com.cast.caspedia.rating.repository.RatingTagRepository;
-import com.cast.caspedia.rating.repository.TagRepository;
+import com.cast.caspedia.rating.repository.*;
 import com.cast.caspedia.rating.util.TagBitmaskUtil;
 import com.cast.caspedia.user.domain.User;
 import com.cast.caspedia.user.domain.UserImage;
@@ -55,6 +53,10 @@ public class UserService {
     private TagRepository tagRepository;
     @Autowired
     private TagBitmaskUtil tagBitmaskUtil;
+    @Autowired
+    private ReplyRepository replyRepository;
+    @Autowired
+    private RatingImpressedRepository ratingImpressedRepository;
 
 
     // 유저 검색 자동완성 기능
@@ -166,7 +168,8 @@ public class UserService {
             dto.setCreatedAt(rating.getCreatedAt());
             dto.setUpdatedAt(rating.getUpdatedAt());
             dto.setImageUrl(rating.getBoardgame().getImageUrl());
-
+            dto.setReplyCount(replyRepository.countByRating(rating));
+            dto.setImpressedCount(ratingImpressedRepository.countByRating(rating));
             dto.setTagKey(tagBitmaskUtil.getTagBitmask(rating)); // 태그 비트마스크 설정
             ratingDtos.add(dto);
         }

@@ -1,5 +1,6 @@
 package com.cast.caspedia.rating.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,5 +22,11 @@ public class RatingDto {
     private String imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @JsonProperty("impressed_count")
+    private int impressedCount;
+
+    @JsonProperty("reply_count")
+    private int replyCount;
 
 }
