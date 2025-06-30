@@ -2,6 +2,7 @@ package com.cast.caspedia.boardgame.repository;
 
 import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto;
+import com.cast.caspedia.boardgame.dto.ExploreDefaultDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -89,6 +90,43 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
         ORDER BY COUNT(r) DESC
     """)
     List<Boardgame> findTopByRatingCount(
+            Pageable pageable
+    );
+
+    @Query(value = """
+    SELECT new com.cast.caspedia.boardgame.dto.ExploreDefaultDto(
+      b.boardgameKey,
+      b.castScore,
+      b.geekWeight,
+      b.imageUrl,
+      (SELECT COUNT(lg) FROM Like lg WHERE lg.boardgame = b),
+      b.nameEng,
+      b.nameKor
+    )
+    FROM Boardgame b
+    WHERE (b.nameKor <> '' OR EXISTS(
+            SELECT 1 FROM Rating r WHERE r.boardgame = b))
+      AND b.minPlayers   >= :minPlayers
+      AND b.maxPlayers   <= :maxPlayers
+      AND b.minPlaytime  >= :minPlayTime
+      AND b.maxPlaytime  <= :maxPlayTime
+      AND b.geekWeight   BETWEEN :minGeekWeight AND :maxGeekWeight
+  """,
+            countQuery = """
+    SELECT COUNT(b)
+    FROM Boardgame b
+    WHERE (b.nameKor <> '' OR EXISTS(
+            SELECT 1 FROM Rating r WHERE r.boardgame = b))
+      AND b.minPlayers   >= :minPlayers
+      AND b.maxPlayers   <= :maxPlayers
+      AND b.minPlaytime  >= :minPlayTime
+      AND b.maxPlaytime  <= :maxPlayTime
+      AND b.geekWeight   BETWEEN :minGeekWeight AND :maxGeekWeight
+  """)
+    Page<ExploreDefaultDto> findExploreDefault(
+            int minPlayers, int maxPlayers,
+            int minPlayTime, int maxPlayTime,
+            int minGeekWeight, int maxGeekWeight,
             Pageable pageable
     );
 }

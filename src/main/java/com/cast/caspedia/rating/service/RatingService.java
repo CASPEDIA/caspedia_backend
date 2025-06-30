@@ -221,9 +221,10 @@ public class RatingService {
 
         // 평가가 있는 경우
         Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgameKey);
-
+        User user = userRepository.findUserByUserId(userId);
         RatingExistResponseDto ratingExistResponseDto = new RatingExistResponseDto();
         ratingExistResponseDto.setRatingExist(true);
+        ratingExistResponseDto.setRatingKey(rating.getRatingKey());
         ratingExistResponseDto.setScore(rating.getScore());
         ratingExistResponseDto.setComment(rating.getComment());
         ratingExistResponseDto.setNameEng(boardgame.getNameEng());
@@ -231,7 +232,7 @@ public class RatingService {
         ratingExistResponseDto.setImageUrl(boardgame.getImageUrl());
         ratingExistResponseDto.setTagKey(tagBitmaskUtil.getTagBitmask(rating)); // 비트마스킹 문자열로 설정
         ratingExistResponseDto.setReplyCount(replyRepository.countByRating(rating)); // 평가에 대한 댓글 수
-
+        ratingExistResponseDto.setImpressed(ratingImpressedRepository.existsByUserAndRating(user, rating)); // 평가에 대한 공감 여부
         return ratingExistResponseDto;
     }
 
@@ -300,6 +301,7 @@ public class RatingService {
                     .likes(likeRepository.countLikeByBoardgame(boardgame))
                     .geekScore(boardgame.getGeekScore())
                     .castScore(boardgame.getCastScore())
+                    .ratingCount(ratingRepository.countByBoardgame(boardgame))
                     .build();
             rankingResponseDtos.add(rankingResponseDto);
         }
@@ -538,6 +540,7 @@ public class RatingService {
                 .tagKeys(tagBitmaskUtil.getTagBitmask(rating)) // 비트마스킹 문자열로 설정
                 .impressedCount(ratingImpressedRepository.countByRating(rating))
                 .replyCount(replyRepository.countByRating(rating))
+                .isImpressed(ratingImpressedRepository.existsByUserAndRating(user, rating))
                 .build();
 
         List<Reply> replyInfoList = replyRepository.findAllByRating(rating);
@@ -552,6 +555,7 @@ public class RatingService {
                     .userImageKey(reply.getUser().getUserImage().getUserImageKey())
                     .impressedCount(replyImpressedRepository.countByReply(reply))
                     .content(reply.getContent())
+                    .isImpressed(replyImpressedRepository.existsByUserAndReply(user, reply))
                     .build();
             replyInfoDtos.add(replyInfo);
         }

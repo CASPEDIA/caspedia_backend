@@ -64,4 +64,7 @@ public class Boardgame {
     @Column(name = "designer", nullable = false, columnDefinition = "text default ''")
     private String designer;
 
+    @Column(name = "likes", nullable = false, columnDefinition = "int default 0")
+    private int likes = 0;
+
 }

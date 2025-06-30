@@ -10,9 +10,7 @@ import com.cast.caspedia.boardgame.util.KoreanMatcher;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.rating.domain.Rating;
 import com.cast.caspedia.rating.dto.TagCountsResponseDto;
-import com.cast.caspedia.rating.repository.RatingRepository;
-import com.cast.caspedia.rating.repository.RatingTagRepository;
-import com.cast.caspedia.rating.repository.TagRepository;
+import com.cast.caspedia.rating.repository.*;
 import com.cast.caspedia.rating.util.TagBitmaskUtil;
 import com.cast.caspedia.user.domain.Like;
 import com.cast.caspedia.user.domain.User;
@@ -21,8 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,8 +54,10 @@ public class BoardgameService {
     private final BoardgameCategoryRepository boardgameCategoryRepository;
 
     private final TagBitmaskUtil tagBitmaskUtil;
+    private final ReplyRepository replyRepository;
+    private final RatingImpressedRepository ratingImpressedRepository;
 
-    public BoardgameService(BoardgameMechanicRepository boardgameMechanicRepository, BoardgameCategoryRepository boardgameCategoryRepository, BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingRepository ratingRepository, TagBitmaskUtil tagBitmaskUtil) {
+    public BoardgameService(BoardgameMechanicRepository boardgameMechanicRepository, BoardgameCategoryRepository boardgameCategoryRepository, BoardgameRepository boardgameRepository, KoreanMatcher koreanMatcher, LikeRepository likeRepository, UserRepository userRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingRepository ratingRepository, TagBitmaskUtil tagBitmaskUtil, ReplyRepository replyRepository, RatingImpressedRepository ratingImpressedRepository) {
         this.boardgameRepository = boardgameRepository;
         this.koreanMatcher = koreanMatcher;
         this.likeRepository = likeRepository;
@@ -64,6 +68,8 @@ public class BoardgameService {
         this.boardgameMechanicRepository = boardgameMechanicRepository;
         this.boardgameCategoryRepository = boardgameCategoryRepository;
         this.tagBitmaskUtil = tagBitmaskUtil;
+        this.replyRepository = replyRepository;
+        this.ratingImpressedRepository = ratingImpressedRepository;
     }
 
     public List<BoardgameAutoFillDto> autofill(String query) {
@@ -122,6 +128,7 @@ public class BoardgameService {
         return likeRepository.existsByBoardgameAndUser(boardgame, user);
     }
 
+    @Transactional
     public void addLike(int boardgameKey, String userId) throws AppException {
         User user = userRepository.findUserByUserId(userId);
         if(user == null) {
@@ -132,10 +139,13 @@ public class BoardgameService {
         if(likeRepository.existsByBoardgameAndUser(boardgame, user)) {
             throw new AppException("이미 좋아요를 누르셨습니다.", HttpStatus.BAD_REQUEST);
         }else {
+            boardgame.setLikes(boardgame.getLikes() + 1);
+            boardgameRepository.save(boardgame);
             likeRepository.save(new Like(boardgame, user));
         }
     }
 
+    @Transactional
     public void deleteLike(int boardgameKey, String userId) throws AppException {
         User user = userRepository.findUserByUserId(userId);
         if(user == null) {
@@ -147,6 +157,8 @@ public class BoardgameService {
         if(like == null) {
             throw new AppException("좋아요를 누르지 않으셨습니다.", HttpStatus.BAD_REQUEST);
         }else {
+            boardgame.setLikes(boardgame.getLikes() - 1);
+            boardgameRepository.save(boardgame);
             likeRepository.delete(like);
         }
     }
@@ -229,12 +241,17 @@ public class BoardgameService {
         Boardgame boardgame = boardgameRepository.findById(boardgameKey).orElseThrow(() -> new AppException("해당 보드게임이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
         List<Rating> ratings = ratingRepository.findAllRatingByBoardgame(boardgame);
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+        User user = userRepository.findUserByUserId(userId);
+
         long totalTagCount = tagRepository.count();
 
         List<RatingListResponseDto> result = new ArrayList<>();
 
         for(Rating rating : ratings) {
             RatingListResponseDto dto = new RatingListResponseDto();
+            dto.setRatingKey(rating.getRatingKey());
             dto.setNanoid(rating.getUser().getNanoid());
             dto.setNickname(rating.getUser().getNickname());
             dto.setUserImageKey(rating.getUser().getUserImage().getUserImageKey());
@@ -242,10 +259,53 @@ public class BoardgameService {
             dto.setScore(rating.getScore());
             dto.setCreatedAt(rating.getCreatedAt().toString());
             dto.setUpdatedAt(rating.getUpdatedAt().toString());
+            dto.setReplyCount(replyRepository.countByRating(rating));
+            dto.setImpressed(ratingImpressedRepository.existsByUserAndRating(user, rating));
 
             dto.setTagKeys(tagBitmaskUtil.getTagBitmask(rating));
             result.add(dto);
         }
         return result;
     }
+
+
+    public Map<String, Object> exploreBoardgames(
+            int page,
+            int minPlayers, int maxPlayers,
+            int minPlayTime, int maxPlayTime,
+            int minGeekWeight, int maxGeekWeight,
+            String sortParam) {
+
+        Sort sort = switch (sortParam) {
+            case "likedesc" -> Sort.by(Sort.Direction.DESC, "likes");
+            case "likeasc" -> Sort.by(Sort.Direction.ASC, "likes");
+            case "castdesc" -> Sort.by(Sort.Direction.DESC, "castScore");
+            case "castasc" -> Sort.by(Sort.Direction.ASC, "castScore");
+            default -> null;
+        };
+
+        Pageable pageable = PageRequest.of(page - 1, 10, sort);
+
+        Page<ExploreDefaultDto> result = boardgameRepository.findExploreDefault(
+                minPlayers,
+                maxPlayers,
+                minPlayTime,
+                maxPlayTime,
+                minGeekWeight,
+                maxGeekWeight,
+                pageable
+        );
+
+        Map<String, Object> pagination = new HashMap<>();
+        pagination.put("total", result.getTotalElements());   // 전체 아이템 수
+        pagination.put("page", result.getNumber() + 1);      // 1부터 시작하는 현재 페이지
+        pagination.put("last_page", result.getTotalPages());     // 전체 페이지 수
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("pagination", pagination);
+        response.put("data", result.getContent());
+
+        return response;
+    }
+
 }

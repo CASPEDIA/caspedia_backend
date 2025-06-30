@@ -140,6 +140,96 @@ public class BoardgameController {
         return ResponseEntity.ok(boardgameService.getRatingList(boardgameKey));
     }
 
+    //보드게임 탐방
+    /**
+     | **자료형** | **파라미터 명** | 의미 | **필수여부** | **제약사항** | 비고 |
+     | --- | --- | --- | --- | --- | --- |
+     | int | page | 페이지 | O | 1이상, 자연수 |  |
+     | int | minp | 최소 인원 수 | O | 1이상, 자연수 | 1,2,3,4,5,6,7,8,9 |
+     | int | maxp | 최대 인원 수 | O | 9이하, 자연수 | 1,2,3,4,5,6,7,8,9 |
+     | int | mint | 최소 플레이 타임 | O | 10이상, 자연수 | 10,30,60,90,120,180 |
+     | int | maxt | 최대 플레이 타임 | O | 180이하, 자연수 | 10,30,60,90,120,180 |
+     | int | ming | 최소 긱 웨이트 | O | 1이상, 자연수 | 1,2,3,4,5 |
+     | int | maxg | 최대 긱 웨이트 | O | 5이하, 자연수 | 1,2,3,4,5 |
+     | str | sort | 정렬 | O | castdesc, castasc, likedesc, likeasc |  |
+     */
+    @GetMapping("/explore")
+    public ResponseEntity<?> exploreBoardgames(@RequestParam(name="page", defaultValue = "1") int page,
+                                               @RequestParam(name="minp", defaultValue = "1") int minPlayers,
+                                               @RequestParam(name="maxp", defaultValue = "9") int maxPlayers,
+                                               @RequestParam(name="mint", defaultValue = "10") int minPlayTime,
+                                               @RequestParam(name="maxt", defaultValue = "180") int maxPlayTime,
+                                               @RequestParam(name="ming", defaultValue = "1") int minGeekWeight,
+                                               @RequestParam(name="maxg", defaultValue = "5") int maxGeekWeight,
+                                               @RequestParam(name="sort", defaultValue = "castdesc") String sort) {
+
+        // 유효성 검사
+
+        //페이지 번호 검사
+        if(page < 1) {
+            throw new AppException("page는 1 이상의 값이어야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //정렬 방식 검사
+        if(!sort.equals("castdesc") && !sort.equals("castasc") && !sort.equals("likedesc") && !sort.equals("likeasc")) {
+            throw new AppException("sort는 castdesc, castasc, likedesc, likeasc 중 하나여야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //플레이어 수 검사
+        switch (minPlayers) {
+            case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
+                break;
+            default:
+                throw new AppException("minp는 1에서 9 사이의 값이어야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+        switch (maxPlayers) {
+            case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
+                break;
+            default:
+                throw new AppException("maxp는 1에서 9 사이의 값이어야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+        if(minPlayers > maxPlayers) {
+            throw new AppException("minp는 maxp보다 작거나 같아야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //플레이 타임 검사
+        switch (minPlayTime) {
+            case 10: case 30: case 60: case 90: case 120: case 180:
+                break;
+            default:
+                throw new AppException("mint는 10, 30, 60, 90, 120, 180 중 하나여야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+        switch (maxPlayTime) {
+            case 10: case 30: case 60: case 90: case 120: case 180:
+                break;
+            default:
+                throw new AppException("maxt는 10, 30, 60, 90, 120, 180 중 하나여야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+        if(minPlayTime > maxPlayTime) {
+            throw new AppException("mint는 maxt보다 작거나 같아야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //긱 웨이트 검사
+        switch (minGeekWeight) {
+            case 1: case 2: case 3: case 4: case 5:
+                break;
+            default:
+                throw new AppException("ming는 1에서 5 사이의 값이어야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+        switch (maxGeekWeight) {
+            case 1: case 2: case 3: case 4: case 5:
+                break;
+            default:
+                throw new AppException("maxg는 1에서 5 사이의 값이어야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+        if(minGeekWeight > maxGeekWeight) {
+            throw new AppException("ming는 maxg보다 작거나 같아야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+
+
+        return ResponseEntity.ok(boardgameService.exploreBoardgames(
+                page, minPlayers, maxPlayers, minPlayTime, maxPlayTime, minGeekWeight, maxGeekWeight, sort));
+    }
 
 
 }
