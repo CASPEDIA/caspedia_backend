@@ -295,7 +295,7 @@ public class RatingController {
             throw new AppException("인증된 사용자 정보가 없습니다.", HttpStatus.BAD_REQUEST);
         }
         try {
-            return ResponseEntity.ok(ratingService.getRatingDetail(userId, ratingKey));
+            return ResponseEntity.ok(ratingService.getRatingDetail(ratingKey));
         } catch (Exception e) {
             throw new AppException("평가 상세 정보를 가져오는데 실패하였습니다.", HttpStatus.BAD_REQUEST);
         }

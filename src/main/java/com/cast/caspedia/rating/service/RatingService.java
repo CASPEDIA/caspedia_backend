@@ -510,14 +510,13 @@ public class RatingService {
         }
     }
 
-    public RatingDetailResponseDto getRatingDetail(String userId, Integer ratingKey) {
-        User user = userRepository.findUserByUserId(userId);
-        if(user == null) {
-            throw new AppException("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
-        }
+    public RatingDetailResponseDto getRatingDetail(Integer ratingKey) {
+
 
         Rating rating = ratingRepository.findById(ratingKey)
                 .orElseThrow(() -> new AppException("해당 평가를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        User user = rating.getUser();
 
         Boardgame boardgame = rating.getBoardgame();
         RatingDetailResponseDto.GameInfoDto gameInfo = RatingDetailResponseDto.GameInfoDto.builder()
