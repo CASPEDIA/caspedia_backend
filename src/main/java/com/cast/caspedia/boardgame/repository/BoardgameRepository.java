@@ -106,10 +106,10 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
     FROM Boardgame b
     WHERE (b.nameKor <> '' OR EXISTS(
             SELECT 1 FROM Rating r WHERE r.boardgame = b))
-      AND b.minPlayers   >= :minPlayers
-      AND b.maxPlayers   <= :maxPlayers
-      AND b.minPlaytime  >= :minPlayTime
-      AND b.maxPlaytime  <= :maxPlayTime
+      AND b.maxPlayers   >= :minPlayers
+      AND b.minPlayers   <= :maxPlayers
+      AND b.maxPlaytime  >= :minPlaytime
+      AND b.minPlaytime  <= :maxPlaytime
       AND b.geekWeight   BETWEEN :minGeekWeight AND :maxGeekWeight
   """,
             countQuery = """
@@ -117,15 +117,15 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
     FROM Boardgame b
     WHERE (b.nameKor <> '' OR EXISTS(
             SELECT 1 FROM Rating r WHERE r.boardgame = b))
-      AND b.minPlayers   >= :minPlayers
-      AND b.maxPlayers   <= :maxPlayers
-      AND b.minPlaytime  >= :minPlayTime
-      AND b.maxPlaytime  <= :maxPlayTime
+      AND b.maxPlayers   >= :minPlayers
+      AND b.minPlayers   <= :maxPlayers
+      AND b.maxPlaytime  >= :minPlaytime
+      AND b.minPlaytime  <= :maxPlaytime
       AND b.geekWeight   BETWEEN :minGeekWeight AND :maxGeekWeight
   """)
     Page<ExploreDefaultDto> findExploreDefault(
             int minPlayers, int maxPlayers,
-            int minPlayTime, int maxPlayTime,
+            int minPlaytime, int maxPlaytime,
             int minGeekWeight, int maxGeekWeight,
             Pageable pageable
     );
