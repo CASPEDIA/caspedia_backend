@@ -1,13 +1,21 @@
 package com.cast.caspedia.boardgame.domain;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import java.time.LocalDateTime;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
+import java.util.HashSet;
+import java.util.Set;
+
+@Getter
+@Setter
 @Entity
 @Table(name = "boardgame")
-@Data
-public class Boardgame {
+@EqualsAndHashCode(callSuper = false, exclude = {"categories", "mechanics"})
+@ToString(exclude = {"categories", "mechanics"})
+public class Boardgame extends BaseTimeEntity {
 
     @Id
     @Column(name = "boardgame_key")
@@ -55,16 +63,16 @@ public class Boardgame {
     @Column(name = "cast_score", nullable = false, columnDefinition = "float default 0")
     private float castScore = 0.0f;
 
-    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", insertable = false, updatable = false)
-    private LocalDateTime updatedAt;
-
     @Column(name = "designer", nullable = false, columnDefinition = "text default ''")
     private String designer;
 
     @Column(name = "likes", nullable = false, columnDefinition = "int default 0")
     private int likes = 0;
+
+    @OneToMany(mappedBy = "boardgame", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<BoardgameCategory> categories = new HashSet<>();
+
+    @OneToMany(mappedBy = "boardgame", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<BoardgameMechanic> mechanics = new HashSet<>();
 
 }

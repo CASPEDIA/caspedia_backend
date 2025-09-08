@@ -1,14 +1,21 @@
 package com.cast.caspedia.boardgame.domain;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "boardgame_category")
+@EqualsAndHashCode(exclude = "boardgame")
+@ToString(exclude = "boardgame")
 public class BoardgameCategory {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private int id;
 

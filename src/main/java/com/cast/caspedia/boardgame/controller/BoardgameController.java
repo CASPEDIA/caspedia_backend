@@ -3,8 +3,8 @@ package com.cast.caspedia.boardgame.controller;
 import com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto;
 import com.cast.caspedia.boardgame.dto.BoardgameSearchDto;
 import com.cast.caspedia.boardgame.dto.LikeResponseDto;
-import com.cast.caspedia.boardgame.service.BGGService;
-import com.cast.caspedia.boardgame.service.BoardgameCsvSaveService;
+import com.cast.caspedia.boardgame.service.BggFetcherService;
+import com.cast.caspedia.boardgame.service.BggIntegrationService;
 import com.cast.caspedia.boardgame.service.BoardgameService;
 import com.cast.caspedia.error.AppException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,30 +27,27 @@ public class BoardgameController {
     private BoardgameService boardgameService;
 
     @Autowired
-    private BoardgameCsvSaveService boardgameCsvSaveService;
+    private BggFetcherService bggFetcherService;
 
     @Autowired
-    private BGGService bggService;
+    private BggIntegrationService bggIntegrationService;
 
     //BGG API 활용
 
     //보드게임 가져오기
 
-    //scv 저장
-//    @GetMapping("/save")
-    public ResponseEntity<?> saveCsv() {
-        boardgameCsvSaveService.importCsvData("./src/main/resources/data/boardgames_ranks_20241110.csv");
-
-        return ResponseEntity.ok("success");
+    @GetMapping("/fetch")
+    public ResponseEntity<?> fetchBoardgames() {
+        bggFetcherService.fetchAllGames();
+        return ResponseEntity.ok("보드게임 데이터를 성공적으로 가져왔습니다.");
     }
 
-    //상세 정보 가져오기
-    @GetMapping("/detail")
-    public ResponseEntity<?> getDetail() throws Exception {
-        bggService.detailEnhance();
-
-        return ResponseEntity.ok("success");
+    @GetMapping("/integrateData")
+    public ResponseEntity<?> integrateData() {
+        bggIntegrationService.integrateData();
+        return ResponseEntity.ok("보드게임 데이터를 성공적으로 통합했습니다.");
     }
+
 
     //======================================================================
 
