@@ -2,6 +2,8 @@ package com.cast.caspedia.admin.controller;
 
 import com.cast.caspedia.admin.dto.JoinRequestDto;
 import com.cast.caspedia.admin.service.AdminService;
+import com.cast.caspedia.boardgame.service.BggFetcherService;
+import com.cast.caspedia.boardgame.service.BggIntegrationService;
 import com.cast.caspedia.error.AppException;
 import com.cast.caspedia.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,12 @@ public class AdminController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BggFetcherService bggFetcherService;
+
+    @Autowired
+    private BggIntegrationService bggIntegrationService;
 
     // 회원 등록
     @PostMapping("/join")
@@ -85,6 +93,37 @@ public class AdminController {
 
         userService.resetPassword(nanoid);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/fetch")
+    public ResponseEntity<?> fetchBoardgames() {
+        if(!checkAdmin()) {
+            throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        bggFetcherService.fetchAllGames();
+        return ResponseEntity.ok("보드게임 데이터를 성공적으로 가져왔습니다.");
+    }
+
+    @GetMapping("/integrate")
+    public ResponseEntity<?> integrateData() {
+        if(!checkAdmin()) {
+            throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        bggIntegrationService.integrateData();
+        return ResponseEntity.ok("보드게임 데이터를 성공적으로 통합했습니다.");
+    }
+
+    @GetMapping("/fetch-and-integrate")
+    public ResponseEntity<?> fetchAndIntegrate() {
+        if(!checkAdmin()) {
+            throw new AppException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        bggFetcherService.fetchAllGames();
+        bggIntegrationService.integrateData();
+        return ResponseEntity.ok("보드게임 데이터를 성공적으로 가져오고 통합했습니다.");
     }
 
     // admin 권한 확인

@@ -3,8 +3,6 @@ package com.cast.caspedia.boardgame.controller;
 import com.cast.caspedia.boardgame.dto.BoardgameAutoFillDto;
 import com.cast.caspedia.boardgame.dto.BoardgameSearchDto;
 import com.cast.caspedia.boardgame.dto.LikeResponseDto;
-import com.cast.caspedia.boardgame.service.BggFetcherService;
-import com.cast.caspedia.boardgame.service.BggIntegrationService;
 import com.cast.caspedia.boardgame.service.BoardgameService;
 import com.cast.caspedia.error.AppException;
 import lombok.extern.slf4j.Slf4j;
@@ -25,31 +23,6 @@ public class BoardgameController {
 
     @Autowired
     private BoardgameService boardgameService;
-
-    @Autowired
-    private BggFetcherService bggFetcherService;
-
-    @Autowired
-    private BggIntegrationService bggIntegrationService;
-
-    //BGG API 활용
-
-    //보드게임 가져오기
-
-    @GetMapping("/fetch")
-    public ResponseEntity<?> fetchBoardgames() {
-        bggFetcherService.fetchAllGames();
-        return ResponseEntity.ok("보드게임 데이터를 성공적으로 가져왔습니다.");
-    }
-
-    @GetMapping("/integrateData")
-    public ResponseEntity<?> integrateData() {
-        bggIntegrationService.integrateData();
-        return ResponseEntity.ok("보드게임 데이터를 성공적으로 통합했습니다.");
-    }
-
-
-    //======================================================================
 
     //게임 검색 자동완성
     @GetMapping("/autofill")
