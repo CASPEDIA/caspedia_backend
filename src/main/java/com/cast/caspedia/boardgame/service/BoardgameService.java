@@ -291,8 +291,8 @@ public class BoardgameService {
                 maxPlayers,
                 minPlayTime,
                 maxPlayTime,
-                minGeekWeight,
-                maxGeekWeight,
+                (float) minGeekWeight,
+                (float) maxGeekWeight,
                 pageable
         );
 

@@ -124,9 +124,12 @@ public interface BoardgameRepository extends JpaRepository<Boardgame, Integer> {
       AND b.geekWeight   BETWEEN :minGeekWeight AND :maxGeekWeight
   """)
     Page<ExploreDefaultDto> findExploreDefault(
-            int minPlayers, int maxPlayers,
-            int minPlaytime, int maxPlaytime,
-            int minGeekWeight, int maxGeekWeight,
+            @Param("minPlayers") Integer minPlayers,
+            @Param("maxPlayers") Integer maxPlayers,
+            @Param("minPlaytime") Integer minPlaytime,
+            @Param("maxPlaytime") Integer maxPlaytime,
+            @Param("minGeekWeight") Float minGeekWeight,
+            @Param("maxGeekWeight") Float maxGeekWeight,
             Pageable pageable
     );
 }

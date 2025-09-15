@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,7 +16,7 @@ import java.util.Set;
 @Table(name = "boardgame")
 @EqualsAndHashCode(callSuper = false, exclude = {"categories", "mechanics"})
 @ToString(exclude = {"categories", "mechanics"})
-public class Boardgame extends BaseTimeEntity {
+public class Boardgame {
 
     @Id
     @Column(name = "boardgame_key")
@@ -68,6 +69,12 @@ public class Boardgame extends BaseTimeEntity {
 
     @Column(name = "likes", nullable = false, columnDefinition = "int default 0")
     private int likes = 0;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "boardgame", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<BoardgameCategory> categories = new HashSet<>();

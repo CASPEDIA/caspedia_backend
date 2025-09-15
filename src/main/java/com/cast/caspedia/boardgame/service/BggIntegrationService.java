@@ -36,7 +36,7 @@ public class BggIntegrationService {
     private final BoardgameCategoryRepository categoryRepo;
     private final BoardgameMechanicRepository mechanicRepo;
     private final ObjectMapper objectMapper;
-    private static final int BATCH_SIZE = 2000;
+    private static final int BATCH_SIZE = 200;
 
     private static final Pattern KOREAN_PATTERN = Pattern.compile(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*");
 
