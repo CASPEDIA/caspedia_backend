@@ -21,7 +21,7 @@ public class BggConfig {
         private int batchSize = 20;
         private int startId = 1;
         private int endId = 1000000;
-        private int maxEmptyResponses = 10000;
+        private int maxEmptyResponses = 1000;
     }
 
     /**

@@ -18,7 +18,7 @@ public class BggUpdateScheduler {
      * cron = "초 분 시 일 월 요일"
      * 0 0 4 * * * : 매일 새벽 4시 0분 0초
      */
-    @Scheduled(cron = "0 0 7 * * MON") // 매주 월요일 오전 07시에 실행
+    @Scheduled(cron = "0 0 7 14,28 * ?") // 매월 14일 및 28일 오전 7시에 실행
     public void runFullUpdateProcess() {
         log.info("🚀 BGG 데이터 업데이트 스케줄을 시작합니다.");
         try {
