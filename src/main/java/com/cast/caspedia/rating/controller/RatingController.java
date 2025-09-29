@@ -6,6 +6,7 @@ import com.cast.caspedia.rating.service.RatingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/rating")
+@RequestMapping(value = "/api/rating", produces = MediaType.APPLICATION_JSON_VALUE)
 @Slf4j
 public class RatingController {
 

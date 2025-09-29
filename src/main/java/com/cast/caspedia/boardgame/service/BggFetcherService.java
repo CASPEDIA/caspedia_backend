@@ -4,6 +4,7 @@ import com.cast.caspedia.boardgame.config.BggConfig;
 import com.cast.caspedia.boardgame.domain.StagingBoardgame;
 import com.cast.caspedia.boardgame.dto.BggApiResponseDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +26,19 @@ import java.util.stream.IntStream;
 
         private final BggConfig.BggProperties props;
         private final RestTemplate restTemplate;
-        private final XmlMapper xmlMapper; // XML 파싱용
         private final ObjectMapper objectMapper; // JSON 변환용
         private final JdbcTemplate jdbcTemplate; // 대량 데이터 저장을 위한 JdbcTemplate
+
+        /**
+         * XML 데이터를 Java 객체로 변환하기 위한 XmlMapper 빈을 생성합니다.
+         * 알 수 없는 속성이 있어도 오류를 내지 않도록 설정합니다.
+         */
+        private XmlMapper xmlMapper() {
+            XmlMapper xmlMapper = new XmlMapper();
+            xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return xmlMapper;
+        }
+        private final XmlMapper xmlMapper = xmlMapper();
 
         /**
          * BGG API에서 모든 게임 데이터를 가져와 Staging DB에 저장하는 메인 메서드
