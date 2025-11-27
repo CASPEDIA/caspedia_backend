@@ -91,3 +91,12 @@ create table boardgame_category_kor
     category_id integer,
     name text
 );
+-- 알림 
+타입 초기 데이터 삽입 (5가지 알림 타입)
+INSERT INTO notification_type (code, description) VALUES
+    ('REPLY_ON_RATING', '{actor}님이 회원님의 한줄평에 댓글을 남겼습니다.'),
+    ('IMPRESSED_ON_RATING', '{actor}님이 회원님의 한줄평에 좋아요를 눌렀습니다.'),
+    ('IMPRESSED_ON_REPLY', '{actor}님이 회원님의 댓글에 좋아요를 눌렀습니다.'),
+    ('RATING_ON_RATED_BOARDGAME', '{actor}님이 {boardgame}에 한줄평을 남겼습니다.'),
+    ('RATING_ON_LIKED_BOARDGAME', '{actor}님이 회원님이 좋아요한 {boardgame}에 한줄평을 남겼습니다.')
+ON CONFLICT (code) DO NOTHING;

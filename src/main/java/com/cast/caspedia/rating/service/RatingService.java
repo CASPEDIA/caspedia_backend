@@ -4,6 +4,7 @@ import com.cast.caspedia.boardgame.domain.Boardgame;
 import com.cast.caspedia.boardgame.repository.BoardgameRepository;
 import com.cast.caspedia.boardgame.repository.LikeRepository;
 import com.cast.caspedia.error.AppException;
+import com.cast.caspedia.notification.service.NotificationService;
 import com.cast.caspedia.rating.domain.*;
 import com.cast.caspedia.rating.dto.*;
 import com.cast.caspedia.rating.repository.*;
@@ -43,8 +44,10 @@ public class RatingService {
     private final ReplyRepository replyRepository;
 
     private final TagBitmaskUtil tagBitmaskUtil;
+    
+    private final NotificationService notificationService;
 
-    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingImpressedRepository ratingImpressedRepository, ReplyImpressedRepository replyImpressedRepository, ReplyRepository replyRepository, TagBitmaskUtil tagBitmaskUtil) {
+    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingImpressedRepository ratingImpressedRepository, ReplyImpressedRepository replyImpressedRepository, ReplyRepository replyRepository, TagBitmaskUtil tagBitmaskUtil, NotificationService notificationService) {
         this.userRepository = userRepository;
         this.ratingRepository = ratingRepository;
         this.boardgameRepository = boardgameRepository;
@@ -56,6 +59,7 @@ public class RatingService {
         this.replyImpressedRepository = replyImpressedRepository;
         this.replyRepository = replyRepository;
         this.tagBitmaskUtil = tagBitmaskUtil;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -111,6 +115,9 @@ public class RatingService {
         boardgame.setCastScore(calculateRating(ratingRequestDto.getBoardgameKey()));
         // boardgame 테이블에 저장
         boardgameRepository.save(boardgame);
+        
+        // 한줄평 저장 후 알림 생성 (Requirements: 3.1, 3.2, 3.3, 3.4, 4.1, 4.2, 4.3, 4.4)
+        notificationService.createRatingNotifications(savedRating);
     }
 
     @Transactional
@@ -399,7 +406,10 @@ public class RatingService {
             RatingImpressed ratingImpressed = new RatingImpressed();
             ratingImpressed.setUser(user);
             ratingImpressed.setRating(rating);
-            ratingImpressedRepository.save(ratingImpressed);
+            RatingImpressed savedRatingImpressed = ratingImpressedRepository.save(ratingImpressed);
+            
+            // 한줄평 좋아요 저장 후 알림 생성 (Requirements: 2.1, 2.2, 2.5)
+            notificationService.createRatingImpressedNotification(savedRatingImpressed);
         } else {
             throw new AppException("이미 공감한 평가입니다.", HttpStatus.BAD_REQUEST);
         }
@@ -441,7 +451,10 @@ public class RatingService {
         reply.setContent(content);
         reply.setRating(rating);
         reply.setUser(user);
-        replyRepository.save(reply);
+        Reply savedReply = replyRepository.save(reply);
+        
+        // 댓글 저장 후 알림 생성 (Requirements: 1.1, 1.2, 1.3, 1.4)
+        notificationService.createReplyNotification(savedReply);
     }
 
     // 평가 댓글 삭제
@@ -482,7 +495,10 @@ public class RatingService {
             ReplyImpressed replyImpressed = new ReplyImpressed();
             replyImpressed.setUser(user);
             replyImpressed.setReply(reply);
-            replyImpressedRepository.save(replyImpressed);
+            ReplyImpressed savedReplyImpressed = replyImpressedRepository.save(replyImpressed);
+            
+            // 댓글 좋아요 저장 후 알림 생성 (Requirements: 2.3, 2.4, 2.5)
+            notificationService.createReplyImpressedNotification(savedReplyImpressed);
         } else {
             throw new AppException("이미 공감한 댓글입니다.", HttpStatus.BAD_REQUEST);
         }

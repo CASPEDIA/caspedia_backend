@@ -1,4 +1,6 @@
 -- 모든 테이블 삭제 (외래 키 관계를 고려하여 CASCADE 사용)
+DROP TABLE IF EXISTS notification CASCADE;
+DROP TABLE IF EXISTS notification_type CASCADE;
 DROP TABLE IF EXISTS announcement CASCADE;
 DROP TABLE IF EXISTS "user" CASCADE;
 DROP TABLE IF EXISTS rating CASCADE;
@@ -136,6 +138,31 @@ create table boardgame_category_kor
     name text
 );
 
+-- 알림 타입 테이블 (notification_type)
+CREATE TABLE notification_type (
+    notification_type_key SERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 알림 테이블 (notification)
+CREATE TABLE notification (
+    notification_key SERIAL PRIMARY KEY,
+    notification_type_key INTEGER NOT NULL,
+    recipient_user_key INTEGER NOT NULL,
+    actor_user_key INTEGER NOT NULL,
+    rating_key INTEGER,
+    reply_key INTEGER,
+    boardgame_key INTEGER,
+    is_read BOOLEAN NOT NULL DEFAULT false,
+    read_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    description VARCHAR(255) NOT NULL
+);
+
 -- 외래 키 설정
 -- rating 테이블의 user_key가 user 테이블의 user_key를 참조
 ALTER TABLE rating
@@ -172,6 +199,42 @@ ALTER TABLE "user"
     ADD CONSTRAINT FK_user_user_image
         FOREIGN KEY (user_image_key)
             REFERENCES user_image (user_image_key);
+
+-- notification 테이블의 notification_type_key가 notification_type 테이블을 참조
+ALTER TABLE notification
+    ADD CONSTRAINT FK_notification_notification_type
+        FOREIGN KEY (notification_type_key)
+            REFERENCES notification_type (notification_type_key);
+
+-- notification 테이블의 recipient_user_key가 user 테이블을 참조
+ALTER TABLE notification
+    ADD CONSTRAINT FK_notification_recipient_user
+        FOREIGN KEY (recipient_user_key)
+            REFERENCES "user" (user_key);
+
+-- notification 테이블의 actor_user_key가 user 테이블을 참조
+ALTER TABLE notification
+    ADD CONSTRAINT FK_notification_actor_user
+        FOREIGN KEY (actor_user_key)
+            REFERENCES "user" (user_key);
+
+-- notification 테이블의 rating_key가 rating 테이블을 참조 (nullable)
+ALTER TABLE notification
+    ADD CONSTRAINT FK_notification_rating
+        FOREIGN KEY (rating_key)
+            REFERENCES rating (rating_key);
+
+-- notification 테이블의 reply_key가 reply 테이블을 참조 (nullable)
+ALTER TABLE notification
+    ADD CONSTRAINT FK_notification_reply
+        FOREIGN KEY (reply_key)
+            REFERENCES reply (reply_key);
+
+-- notification 테이블의 boardgame_key가 boardgame 테이블을 참조 (nullable)
+ALTER TABLE notification
+    ADD CONSTRAINT FK_notification_boardgame
+        FOREIGN KEY (boardgame_key)
+            REFERENCES boardgame (boardgame_key);
 
 
 -- 트리거 함수 생성
@@ -224,6 +287,25 @@ CREATE TRIGGER trigger_update_boardgame
     FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
 
+CREATE TRIGGER trigger_update_notification_type
+    BEFORE UPDATE ON notification_type
+    FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER trigger_update_notification
+    BEFORE UPDATE ON notification
+    FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+-- 성능 최적화를 위한 인덱스 추가
+-- 읽지 않은 알림 개수 조회 최적화
+CREATE INDEX idx_notification_recipient_read_created 
+    ON notification(recipient_user_key, is_read, created_at);
+
+-- 알림 목록 조회 최적화 (최신순)
+CREATE INDEX idx_notification_recipient_created_desc 
+    ON notification(recipient_user_key, created_at DESC);
+
 insert into caspedia.public.authority (role) values('ROLE_ADMIN'), ('ROLE_USER');
 
 insert into caspedia.public.user_image (user_image_key, path, name)
@@ -254,3 +336,11 @@ INSERT INTO tag (name) VALUES
                            ('순발력이 필요한😎'),
                            ('상호작용이 많은⚔'),
                            ('상호작용이 적은😌');
+
+-- 알림 타입 초기 데이터 삽입 (5가지 알림 타입)
+INSERT INTO notification_type (code, description) VALUES
+    ('REPLY_ON_RATING', '{actor}님이 회원님의 한줄평에 댓글을 남겼습니다.'),
+    ('IMPRESSED_ON_RATING', '{actor}님이 회원님의 한줄평에 좋아요를 눌렀습니다.'),
+    ('IMPRESSED_ON_REPLY', '{actor}님이 회원님의 댓글에 좋아요를 눌렀습니다.'),
+    ('RATING_ON_RATED_BOARDGAME', '{actor}님이 {boardgame}에 한줄평을 남겼습니다.'),
+    ('RATING_ON_LIKED_BOARDGAME', '{actor}님이 회원님이 좋아요한 {boardgame}에 한줄평을 남겼습니다.');
