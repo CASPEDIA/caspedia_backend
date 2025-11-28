@@ -168,35 +168,11 @@ public class NotificationService {
         // 배치 insert를 위한 알림 리스트
         List<Notification> notificationsToSave = new java.util.ArrayList<>();
         
-        // 1. 해당 게임에 한줄평을 남긴 다른 사용자들에게 알림 생성 (Requirements 3.1, 3.2, 3.3, 3.4)
-        List<Rating> existingRatings = ratingRepository.findAllRatingByBoardgame(boardgame);
-        NotificationType ratingOnRatedType = notificationTypeRepository
-                .findByCode(NotificationTypeCode.RATING_ON_RATED_BOARDGAME.getCode())
-                .orElseThrow(() -> new RuntimeException("알림 타입을 찾을 수 없습니다: " + NotificationTypeCode.RATING_ON_RATED_BOARDGAME.getCode()));
+        // 중복 방지를 위한 수신자 추적 (좋아요 알림이 우선)
+        java.util.Set<String> likedRecipients = new java.util.HashSet<>();
         
-        for (Rating existingRating : existingRatings) {
-            User recipient = existingRating.getUser();
-            
-            // 자기 자신에게 알림 생성 방지 (Requirement 3.4)
-            if (actor.getId().equals(recipient.getId())) {
-                continue;
-            }
-            
-            Notification notification = new Notification();
-            notification.setNotificationType(ratingOnRatedType);
-            notification.setRecipient(recipient);
-            notification.setActor(actor);
-            notification.setRating(rating);
-            notification.setBoardgame(boardgame);
-            notification.setRead(false);
-            notification.setCreatedAt(now);
-            notification.setUpdatedAt(now);
-            notification.setDescription(createRatingOnRatedBoardgameNotificationDescription(actor, boardgame));
-            
-            notificationsToSave.add(notification);
-        }
-        
-        // 2. 해당 게임에 좋아요를 누른 다른 사용자들에게 알림 생성 (Requirements 4.1, 4.2, 4.3, 4.4)
+        // 1. 해당 게임에 좋아요를 누른 다른 사용자들에게 알림 생성 (Requirements 4.1, 4.2, 4.3, 4.4)
+        // 우선순위가 높으므로 먼저 처리
         List<Like> likes = likeRepository.findAllByBoardgame(boardgame);
         NotificationType ratingOnLikedType = notificationTypeRepository
                 .findByCode(NotificationTypeCode.RATING_ON_LIKED_BOARDGAME.getCode())
@@ -210,6 +186,9 @@ public class NotificationService {
                 continue;
             }
             
+            // 좋아요 알림 수신자 추적
+            likedRecipients.add(recipient.getId());
+            
             Notification notification = new Notification();
             notification.setNotificationType(ratingOnLikedType);
             notification.setRecipient(recipient);
@@ -220,6 +199,40 @@ public class NotificationService {
             notification.setCreatedAt(now);
             notification.setUpdatedAt(now);
             notification.setDescription(createRatingOnLikedBoardgameNotificationDescription(actor, boardgame));
+            
+            notificationsToSave.add(notification);
+        }
+        
+        // 2. 해당 게임에 한줄평을 남긴 다른 사용자들에게 알림 생성 (Requirements 3.1, 3.2, 3.3, 3.4)
+        // 단, 이미 좋아요 알림을 받은 사용자는 제외
+        List<Rating> existingRatings = ratingRepository.findAllRatingByBoardgame(boardgame);
+        NotificationType ratingOnRatedType = notificationTypeRepository
+                .findByCode(NotificationTypeCode.RATING_ON_RATED_BOARDGAME.getCode())
+                .orElseThrow(() -> new RuntimeException("알림 타입을 찾을 수 없습니다: " + NotificationTypeCode.RATING_ON_RATED_BOARDGAME.getCode()));
+        
+        for (Rating existingRating : existingRatings) {
+            User recipient = existingRating.getUser();
+            
+            // 자기 자신에게 알림 생성 방지 (Requirement 3.4)
+            if (actor.getId().equals(recipient.getId())) {
+                continue;
+            }
+            
+            // 이미 좋아요 알림을 받은 사용자는 제외 (중복 방지)
+            if (likedRecipients.contains(recipient.getId())) {
+                continue;
+            }
+            
+            Notification notification = new Notification();
+            notification.setNotificationType(ratingOnRatedType);
+            notification.setRecipient(recipient);
+            notification.setActor(actor);
+            notification.setRating(rating);
+            notification.setBoardgame(boardgame);
+            notification.setRead(false);
+            notification.setCreatedAt(now);
+            notification.setUpdatedAt(now);
+            notification.setDescription(createRatingOnRatedBoardgameNotificationDescription(actor, boardgame));
             
             notificationsToSave.add(notification);
         }
@@ -348,7 +361,7 @@ public class NotificationService {
         
         // Requirement 7.4, 7.5: 존재하지 않는 알림 또는 다른 사용자의 알림 접근 예외 처리
         Notification notification = notificationRepository.findByNotificationKeyAndRecipient(notificationKey, user)
-                .orElseThrow(() -> new AppException("해당 알림이 존재하지 않거나 접근 권한이 없습니다.", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new AppException("해당 알림이 존재하지 않거나 접근 권한이 없습니다.", HttpStatus.NOT_FOUND));
         
         // Requirement 7.1, 7.2, 7.3: is_read를 true로 변경, read_at과 updated_at을 현재 시간으로 설정
         notification.setRead(true);
