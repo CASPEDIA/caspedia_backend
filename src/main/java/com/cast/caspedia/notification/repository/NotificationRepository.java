@@ -1,6 +1,8 @@
 package com.cast.caspedia.notification.repository;
 
 import com.cast.caspedia.notification.domain.Notification;
+import com.cast.caspedia.rating.domain.Rating;
+import com.cast.caspedia.rating.domain.Reply;
 import com.cast.caspedia.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -35,4 +37,30 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
      * @return 알림 엔티티
      */
     Optional<Notification> findByNotificationKeyAndRecipient(Integer notificationKey, User recipient);
+    
+    /**
+     * Rating 관련 알림 삭제
+     * @param rating 한줄평 엔티티
+     */
+    void deleteAllByRating(Rating rating);
+    
+    /**
+     * Reply 관련 알림 삭제
+     * @param reply 댓글 엔티티
+     */
+    void deleteAllByReply(Reply reply);
+    
+    /**
+     * 특정 사용자가 특정 Rating에 남긴 좋아요 알림 삭제
+     * @param rating 한줄평 엔티티
+     * @param actor 좋아요를 누른 사용자
+     */
+    void deleteByRatingAndActor(Rating rating, User actor);
+    
+    /**
+     * 특정 사용자가 특정 Reply에 남긴 좋아요 알림 삭제
+     * @param reply 댓글 엔티티
+     * @param actor 좋아요를 누른 사용자
+     */
+    void deleteByReplyAndActor(Reply reply, User actor);
 }

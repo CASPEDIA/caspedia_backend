@@ -46,8 +46,10 @@ public class RatingService {
     private final TagBitmaskUtil tagBitmaskUtil;
     
     private final NotificationService notificationService;
+    
+    private final com.cast.caspedia.notification.repository.NotificationRepository notificationRepository;
 
-    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingImpressedRepository ratingImpressedRepository, ReplyImpressedRepository replyImpressedRepository, ReplyRepository replyRepository, TagBitmaskUtil tagBitmaskUtil, NotificationService notificationService) {
+    RatingService(UserRepository userRepository, RatingRepository ratingRepository, BoardgameRepository boardgameRepository, RatingReqRepository ratingReqRepository, LikeRepository likeRepository, RatingTagRepository ratingTagRepository, TagRepository tagRepository, RatingImpressedRepository ratingImpressedRepository, ReplyImpressedRepository replyImpressedRepository, ReplyRepository replyRepository, TagBitmaskUtil tagBitmaskUtil, NotificationService notificationService, com.cast.caspedia.notification.repository.NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.ratingRepository = ratingRepository;
         this.boardgameRepository = boardgameRepository;
@@ -60,6 +62,7 @@ public class RatingService {
         this.replyRepository = replyRepository;
         this.tagBitmaskUtil = tagBitmaskUtil;
         this.notificationService = notificationService;
+        this.notificationRepository = notificationRepository;
     }
 
     @Transactional
@@ -173,17 +176,13 @@ public class RatingService {
         Rating rating = ratingRepository.findByUserIdAndBoardgameKey(userId, boardgameKey);
         Boardgame boardgame = rating.getBoardgame();
 
-        // RatingTag 삭제
-        ratingTagRepository.deleteByRating(rating);
-
-        //rating 삭제
-        ratingRepository.delete(rating);
-
         // 댓글 목록 조회
         List<Reply> replies = replyRepository.findAllByRating(rating);
 
-        // 댓글에 대한 공감 삭제
+        // 댓글에 대한 알림 및 공감 삭제
         for (Reply reply : replies) {
+            // 댓글 관련 알림 삭제 (외래 키 제약 조건 해결)
+            notificationRepository.deleteAllByReply(reply);
             // 댓글에 대한 공감 삭제
             replyImpressedRepository.deleteAllByReply(reply);
         }
@@ -191,8 +190,17 @@ public class RatingService {
         // 댓글 삭제
         replyRepository.deleteAll(replies);
 
+        // Rating 관련 알림 삭제 (외래 키 제약 조건 해결)
+        notificationRepository.deleteAllByRating(rating);
+
         // 평가에 대한 공감 삭제
         ratingImpressedRepository.deleteAllByRating(rating);
+
+        // RatingTag 삭제
+        ratingTagRepository.deleteByRating(rating);
+
+        //rating 삭제
+        ratingRepository.delete(rating);
 
         // boardgame 엔티티에 평점 업데이트
         boardgame.setCastScore(calculateRating(boardgameKey));
@@ -432,6 +440,9 @@ public class RatingService {
         if(!ratingImpressed.getUser().getId().equals(user.getId())) {
             throw new AppException("공감한 평가가 아닙니다.", HttpStatus.FORBIDDEN);
         } else {
+            // 좋아요 관련 알림 삭제 (외래 키 제약 조건 해결)
+            notificationRepository.deleteByRatingAndActor(rating, user);
+            
             // 공감 삭제
             ratingImpressedRepository.delete(ratingImpressed);
         }
@@ -472,6 +483,9 @@ public class RatingService {
         if(!reply.getUser().getId().equals(user.getId())) {
             throw new AppException("댓글 작성자만 삭제할 수 있습니다.", HttpStatus.FORBIDDEN);
         }
+
+        // 댓글 관련 알림 삭제 (외래 키 제약 조건 해결)
+        notificationRepository.deleteAllByReply(reply);
 
         // 댓글에 대한 공감 삭제
         replyImpressedRepository.deleteAllByReply(reply);
@@ -521,6 +535,9 @@ public class RatingService {
         if(!replyImpressed.getUser().getId().equals(user.getId())) {
             throw new AppException("공감한 댓글이 아닙니다.", HttpStatus.FORBIDDEN);
         } else {
+            // 좋아요 관련 알림 삭제 (외래 키 제약 조건 해결)
+            notificationRepository.deleteByReplyAndActor(reply, user);
+            
             // 공감 삭제
             replyImpressedRepository.delete(replyImpressed);
         }
