@@ -520,6 +520,7 @@ public class RatingService {
     }
 
     // 댓글에 공감 삭제
+    @Transactional
     public void deleteReplyImpressed(String userId, Integer replyKey) {
         Reply reply = replyRepository.findById(replyKey)
                 .orElseThrow(() -> new AppException("해당 댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
