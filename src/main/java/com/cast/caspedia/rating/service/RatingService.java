@@ -424,6 +424,7 @@ public class RatingService {
     }
 
     // 평가에 공감 삭제
+    @Transactional
     public void deleteRatingImpressed(String userId, Integer ratingKey) {
         Rating rating = ratingRepository.findById(ratingKey)
                 .orElseThrow(() -> new AppException("해당 평가를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
