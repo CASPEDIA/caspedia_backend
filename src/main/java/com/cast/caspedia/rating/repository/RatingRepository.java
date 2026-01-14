@@ -58,4 +58,6 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
     Page<RecentRatedUserResponseDto> findRecentRatedUser(Pageable pageable);
 
     int countByBoardgame(Boardgame boardgame);
+
+    int countByUser(User user);
 }

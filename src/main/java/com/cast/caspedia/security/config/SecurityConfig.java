@@ -1,5 +1,6 @@
 package com.cast.caspedia.security.config;
 
+import com.cast.caspedia.achievement.service.AchievementService;
 import com.cast.caspedia.security.custom.CustomUserDetailService;
 import com.cast.caspedia.security.jwt.filter.JwtAuthenticationFilter;
 import com.cast.caspedia.security.jwt.filter.JwtRequestFilter;
@@ -44,6 +45,9 @@ public class SecurityConfig {
     @Autowired
     private FrontServerProp frontServerProp;
 
+    @Autowired
+    private AchievementService achievementService;
+
     @Bean
     public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -74,7 +78,7 @@ public class SecurityConfig {
 
         // ✅ JWT 요청 필터 1️⃣
         // ✅ JWT 인증 필터 2️⃣
-        http.addFilterAt(new JwtAuthenticationFilter(authenticationManager, jwtTokenProvider, objectMapper), UsernamePasswordAuthenticationFilter.class)
+        http.addFilterAt(new JwtAuthenticationFilter(authenticationManager, jwtTokenProvider, objectMapper, achievementService), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtRequestFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
         ;
 

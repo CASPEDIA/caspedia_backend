@@ -1,4 +1,7 @@
 -- 모든 테이블 삭제 (외래 키 관계를 고려하여 CASCADE 사용)
+DROP TABLE IF EXISTS user_achievement CASCADE;
+DROP TABLE IF EXISTS achievement CASCADE;
+DROP TABLE IF EXISTS user_login_history CASCADE;
 DROP TABLE IF EXISTS notification CASCADE;
 DROP TABLE IF EXISTS notification_type CASCADE;
 DROP TABLE IF EXISTS announcement CASCADE;
@@ -344,3 +347,45 @@ INSERT INTO notification_type (code, description) VALUES
     ('IMPRESSED_ON_REPLY', '{actor}님이 회원님의 댓글에 좋아요를 눌렀습니다.'),
     ('RATING_ON_RATED_BOARDGAME', '{actor}님이 {boardgame}에 한줄평을 남겼습니다.'),
     ('RATING_ON_LIKED_BOARDGAME', '{actor}님이 회원님이 좋아요한 {boardgame}에 한줄평을 남겼습니다.');
+
+-- 로그인 기록 테이블 (user_login_history)
+CREATE TABLE user_login_history (
+    login_key SERIAL PRIMARY KEY,
+    user_key INTEGER NOT NULL,
+    login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 업적 정의 테이블 (achievement) - 이벤트/히든 전용
+CREATE TABLE achievement (
+    achievement_key SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    type VARCHAR(20) NOT NULL
+);
+
+-- 유저별 이벤트 업적 달성 테이블 (user_achievement)
+CREATE TABLE user_achievement (
+    user_key INTEGER NOT NULL,
+    achievement_key INTEGER NOT NULL,
+    achieved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(user_key, achievement_key)
+);
+
+-- user_login_history 외래 키 설정
+ALTER TABLE user_login_history
+    ADD CONSTRAINT FK_user_login_history_user
+        FOREIGN KEY (user_key)
+            REFERENCES "user" (user_key);
+
+-- user_achievement 외래 키 설정
+ALTER TABLE user_achievement
+    ADD CONSTRAINT FK_user_achievement_user
+        FOREIGN KEY (user_key)
+            REFERENCES "user" (user_key);
+
+ALTER TABLE user_achievement
+    ADD CONSTRAINT FK_user_achievement_achievement
+        FOREIGN KEY (achievement_key)
+            REFERENCES achievement (achievement_key);
+
+-- 업적 초기 데이터 삽입
+INSERT INTO achievement (name, type) VALUES ('byunmin_crew', 'event');

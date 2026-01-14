@@ -1,5 +1,6 @@
 package com.cast.caspedia.security.jwt.filter;
 
+import com.cast.caspedia.achievement.service.AchievementService;
 import com.cast.caspedia.security.custom.CustomUserDetails;
 import com.cast.caspedia.security.jwt.constants.JwtContstants;
 import com.cast.caspedia.security.jwt.provider.JwtTokenProvider;
@@ -30,14 +31,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AchievementService achievementService;
 
     private ObjectMapper objectMapper;
 
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, ObjectMapper objectMapper) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, ObjectMapper objectMapper, AchievementService achievementService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.objectMapper = objectMapper;
+        this.achievementService = achievementService;
         setFilterProcessesUrl("/api/user/login");
     }
 
@@ -97,6 +100,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String userRole = userDetails.getUser().getAuthority().getRole();
         String nanoid = userDetails.getUser().getNanoid();
         int imageKey = userDetails.getUser().getUserImage().getUserImageKey();
+
+        // 로그인 기록 저장
+        achievementService.recordLogin(userDetails.getUser());
 
         // JWT 생성
         String jwt = jwtTokenProvider.createToken(userId, userRole, nanoid);
